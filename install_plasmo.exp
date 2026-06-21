@@ -1,0 +1,8 @@
+#!/usr/bin/expect
+set timeout -1
+spawn npx create-plasmo@latest extension
+expect "Extension description:"
+send "\r"
+expect "Author name:"
+send "\r"
+expect eof
