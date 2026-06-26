@@ -72,3 +72,27 @@ async def get_profile(user_id: str, db: AsyncSession = Depends(get_db)):
             "leetcode": handles.leetcode if handles else None,
         } if handles else {}
     }
+
+@router.put("/{user_id}/profile")
+async def update_profile(user_id: str, data: Dict[str, Any], db: AsyncSession = Depends(get_db)):
+    """Update user handles and preferences"""
+    result = await db.execute(select(User).where(User.id == user_id))
+    user = result.scalars().first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+        
+    handles_res = await db.execute(select(LinkedHandles).where(LinkedHandles.user_id == user_id))
+    handles = handles_res.scalars().first()
+    
+    if not handles:
+        handles = LinkedHandles(user_id=user_id)
+        db.add(handles)
+        
+    handles_data = data.get("handles", {})
+    if "codeforces" in handles_data: handles.codeforces = handles_data["codeforces"]
+    if "codechef" in handles_data: handles.codechef = handles_data["codechef"]
+    if "cses" in handles_data: handles.cses = handles_data["cses"]
+    if "leetcode" in handles_data: handles.leetcode = handles_data["leetcode"]
+    
+    await db.commit()
+    return {"status": "success"}

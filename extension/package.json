@@ -1,9 +1,9 @@
 {
-  "name": "extension",
-  "displayName": "Extension",
-  "version": "0.0.1",
-  "description": "A basic Plasmo extension.",
-  "author": "Plasmo Corp. <foss@plasmo.com>",
+  "name": "cpflow-extension",
+  "displayName": "CPFlow — Open in Workspace",
+  "version": "0.1.0",
+  "description": "Scrape competitive programming problems from Codeforces, CodeChef, CSES, and LeetCode and open them in CPFlow.",
+  "author": "CPFlow",
   "scripts": {
     "dev": "plasmo dev",
     "build": "plasmo build",
@@ -26,6 +26,10 @@
   "manifest": {
     "host_permissions": [
       "https://*/*"
+    ],
+    "permissions": [
+      "activeTab",
+      "tabs"
     ]
   }
 }

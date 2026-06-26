@@ -1,0 +1,16 @@
+services:
+  piston:
+    image: ghcr.io/engineer-man/piston
+    container_name: cpflow-piston
+    privileged: true
+    ports:
+      - "2000:2000"
+    volumes:
+      - piston-packages:/piston/packages
+    tmpfs:
+      - /piston/jobs
+      - /tmp
+    restart: unless-stopped
+
+volumes:
+  piston-packages:
