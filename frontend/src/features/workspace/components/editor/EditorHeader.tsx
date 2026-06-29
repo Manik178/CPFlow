@@ -8,15 +8,15 @@ export function EditorHeader() {
   const { language, handleLanguageChange, handleResetCode, pistonOnline } = useWorkspaceContext();
 
   return (
-    <div className="h-10 bg-zinc-950 border-b border-zinc-800 flex items-center px-4 justify-between">
-      <div className="flex items-center gap-2">
-        <div className="px-3 py-1 bg-zinc-900 text-xs font-medium text-zinc-300 rounded-t-md border border-b-0 border-zinc-800">
+    <div className="h-10 bg-zinc-950 border-b border-zinc-800 flex items-center pr-4 justify-between overflow-hidden">
+      <div className="flex items-center gap-2 h-full">
+        <div className="px-4 py-1.5 h-full bg-zinc-900 text-xs font-medium text-zinc-100 border-r border-zinc-800 border-t-[2px] border-t-blue-500 flex items-center justify-center">
           {LANGUAGE_CONFIG[language].fileName}
         </div>
         <button
           onClick={handleResetCode}
           title="Reset to default template"
-          className="p-1 rounded hover:bg-zinc-800 text-zinc-500 hover:text-zinc-300 transition-colors"
+          className="p-1.5 rounded hover:bg-zinc-800 text-zinc-500 hover:text-zinc-300 transition-colors ml-1"
         >
           <RotateCcw className="w-3.5 h-3.5" />
         </button>
@@ -39,7 +39,7 @@ export function EditorHeader() {
         <select
           value={language}
           onChange={(e) => handleLanguageChange(e.target.value)}
-          className="bg-zinc-900 border border-zinc-800 text-zinc-300 text-xs rounded px-2 py-1 outline-none focus:border-blue-500 transition-colors cursor-pointer"
+          className="bg-zinc-900 border border-zinc-800 text-zinc-300 text-xs rounded-md px-2 py-1 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 transition-all duration-200 cursor-pointer"
         >
           {Object.entries(LANGUAGE_CONFIG).map(([key, cfg]) => (
             <option key={key} value={key}>

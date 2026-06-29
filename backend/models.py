@@ -65,3 +65,27 @@ class NotebookEntry(Base):
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
     user = relationship("User", back_populates="notebook_entries")
+
+class WorkspaceDraft(Base):
+    __tablename__ = "workspace_drafts"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(String, ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    platform = Column(String, nullable=False)
+    problem_id = Column(String, nullable=False)
+    language = Column(String, nullable=False)
+    code = Column(Text, nullable=False)
+    updated_at = Column(DateTime(timezone=True), nullable=False) # Important for conflict resolution
+
+class WorkspaceLayout(Base):
+    __tablename__ = "workspace_layouts"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(String, ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    platform = Column(String, nullable=False)
+    problem_id = Column(String, nullable=False)
+    drawer_height = Column(Integer, nullable=False, default=300)
+    active_tab = Column(String, nullable=False, default="testcases")
+    active_language = Column(String, nullable=False, default="cpp")
+    updated_at = Column(DateTime(timezone=True), nullable=False)
+

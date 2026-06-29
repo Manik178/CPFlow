@@ -12,8 +12,8 @@ import hashlib
 from contextlib import asynccontextmanager
 
 from database import engine, Base
-from routers import users, analytics, contests, execute, learning_hub
-from cache import _problem_cache
+from routers import users, analytics, contests, execute, learning_hub, workspace
+from cache import _problem_cache, get_cache, set_cache
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -39,6 +39,7 @@ app.include_router(analytics.router)
 app.include_router(contests.router)
 app.include_router(execute.router)
 app.include_router(learning_hub.router)
+app.include_router(workspace.router)
 
 class ProblemImportRequest(BaseModel):
     title: str
@@ -67,8 +68,14 @@ async def import_problem(problem: ProblemImportRequest):
     problem_data = problem.model_dump()
     problem_data["problem_id"] = problem_id
 
-    # Cache in memory (Redis replacement for local dev)
+    problem_data["problem_id"] = problem_id
+
+    # Cache in memory and Redis (30 days TTL)
     _problem_cache[problem_id] = problem_data
+    try:
+        await set_cache(f"problem_data:{problem_id}", problem_data, ex=2592000)
+    except Exception as e:
+        print("Failed to save to redis", e)
 
     return {"status": "success", "problem_id": problem_id}
 
@@ -78,6 +85,14 @@ async def get_problem(problem_id: str):
     Retrieves a cached problem by its ID.
     """
     problem = _problem_cache.get(problem_id)
+    if not problem:
+        try:
+            problem = await get_cache(f"problem_data:{problem_id}")
+            if problem:
+                _problem_cache[problem_id] = problem
+        except Exception:
+            pass
+            
     if not problem:
         raise HTTPException(status_code=404, detail="Problem not found or cache expired")
     return problem

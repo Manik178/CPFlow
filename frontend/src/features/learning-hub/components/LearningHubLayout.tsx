@@ -17,7 +17,7 @@ export function LearningHubLayout({ data, pid }: { data: LearningHubData; pid: s
   return (
     <div className="max-w-5xl mx-auto py-8 px-6">
       <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="bg-zinc-900 border border-zinc-800 p-1 mb-8">
+        <TabsList className="bg-zinc-900/20 border border-zinc-800/50 p-1 mb-8">
           <TabsTrigger value="overview" className="gap-2 data-[state=active]:bg-zinc-800 data-[state=active]:text-zinc-100">
             <BookOpen className="w-4 h-4" /> Overview
           </TabsTrigger>
@@ -38,24 +38,24 @@ export function LearningHubLayout({ data, pid }: { data: LearningHubData; pid: s
         <TabsContent value="overview" className="animate-in fade-in slide-in-from-bottom-4 duration-500">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="col-span-2 space-y-6">
-              <section className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
+              <section className="bg-zinc-900/20 border border-zinc-800 rounded-xl p-6">
                 <h2 className="text-xl font-semibold mb-3">Summary</h2>
                 <p className="text-zinc-300 leading-relaxed">{overview.summary}</p>
               </section>
 
-              <section className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
+              <section className="bg-zinc-900/20 border border-zinc-800 rounded-xl p-6">
                 <h2 className="text-xl font-semibold mb-3 text-emerald-400">Key Insight</h2>
                 <p className="text-zinc-300 leading-relaxed">{overview.key_insight}</p>
               </section>
             </div>
 
             <div className="space-y-6">
-              <section className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
+              <section className="bg-zinc-900/20 border border-zinc-800 rounded-xl p-6">
                 <h3 className="font-medium text-zinc-400 mb-2 uppercase text-xs tracking-wider">Difficulty</h3>
                 <div className="font-semibold text-lg">{overview.difficulty}</div>
               </section>
 
-              <section className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
+              <section className="bg-zinc-900/20 border border-zinc-800 rounded-xl p-6">
                 <h3 className="font-medium text-zinc-400 mb-2 uppercase text-xs tracking-wider">Complexity</h3>
                 <div className="space-y-2">
                   <div className="flex justify-between">
@@ -69,7 +69,7 @@ export function LearningHubLayout({ data, pid }: { data: LearningHubData; pid: s
                 </div>
               </section>
 
-              <section className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
+              <section className="bg-zinc-900/20 border border-zinc-800 rounded-xl p-6">
                 <h3 className="font-medium text-zinc-400 mb-3 uppercase text-xs tracking-wider">Concepts & Tags</h3>
                 <div className="flex flex-wrap gap-2">
                   {overview.concepts.map((c, i) => (
@@ -89,7 +89,7 @@ export function LearningHubLayout({ data, pid }: { data: LearningHubData; pid: s
         </TabsContent>
 
         <TabsContent value="editorial" className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-          <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-8 prose prose-invert max-w-none prose-pre:bg-zinc-950 prose-pre:border prose-pre:border-zinc-800 selection:bg-yellow-400/30">
+          <div className="bg-zinc-900/20 border border-zinc-800 rounded-xl p-8 prose prose-invert max-w-none prose-pre:bg-zinc-950 prose-pre:border prose-pre:border-zinc-800 selection:bg-yellow-400/30">
             <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath]} rehypePlugins={[rehypeKatex]}>
               {editorial.markdown_content}
             </ReactMarkdown>
@@ -99,7 +99,7 @@ export function LearningHubLayout({ data, pid }: { data: LearningHubData; pid: s
         <TabsContent value="alternatives" className="animate-in fade-in slide-in-from-bottom-4 duration-500">
           <div className="space-y-6">
             {alternatives.approaches.map((approach, index) => (
-              <div key={index} className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
+              <div key={index} className="bg-zinc-900/20 border border-zinc-800 rounded-xl p-6">
                 <h2 className="text-xl font-semibold mb-4 text-blue-400">{approach.name}</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                   <div className="bg-zinc-950 rounded-lg p-4 border border-zinc-800/50">
@@ -137,7 +137,7 @@ export function LearningHubLayout({ data, pid }: { data: LearningHubData; pid: s
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {similarProblems.problems.map((prob, index) => (
               <a key={index} href={prob.url} target="_blank" rel="noopener noreferrer" className="block group">
-                <div className="bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-600 transition-all rounded-xl p-5 h-full flex flex-col justify-between">
+                <div className="bg-zinc-900/20 hover:bg-zinc-900/50 border border-zinc-800/50 hover:border-zinc-700/50 transition-all duration-300 ease-out rounded-xl p-5 h-full flex flex-col justify-between">
                   <div>
                     <div className="flex justify-between items-start mb-3">
                       <h3 className="text-lg font-medium text-blue-400 group-hover:text-blue-300 transition-colors">
@@ -169,7 +169,7 @@ export function LearningHubLayout({ data, pid }: { data: LearningHubData; pid: s
           <div className="grid grid-cols-1 gap-4">
             {resources.resources.map((res, index) => (
               <a key={index} href={res.url} target="_blank" rel="noopener noreferrer" className="block group">
-                <div className="bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-600 transition-all rounded-xl p-5 flex items-center justify-between">
+                <div className="bg-zinc-900/20 hover:bg-zinc-900/50 border border-zinc-800/50 hover:border-zinc-700/50 transition-all duration-300 ease-out rounded-xl p-5 flex items-center justify-between">
                   <div className="flex items-center gap-4">
                     <div className="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center shrink-0 group-hover:bg-zinc-700 transition-colors">
                       {res.type.toLowerCase().includes("video") ? <Play className="w-4 h-4 text-rose-400" /> : <FileText className="w-4 h-4 text-blue-400" />}

@@ -3,8 +3,9 @@ import type { Template } from "@/shared/types/workspace";
 const STORAGE_KEY = "cpflow_templates";
 
 export const templateService = {
-  getTemplates(): Template[] {
-    const stored = localStorage.getItem(STORAGE_KEY);
+  getTemplates(userId: string = "anonymous"): Template[] {
+    const stored = localStorage.getItem(`${STORAGE_KEY}_${userId}`);
+
     if (stored) {
       try {
         return JSON.parse(stored);
@@ -15,7 +16,7 @@ export const templateService = {
     return [];
   },
 
-  saveTemplates(templates: Template[]): void {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(templates));
+  saveTemplates(templates: Template[], userId: string = "anonymous"): void {
+    localStorage.setItem(`${STORAGE_KEY}_${userId}`, JSON.stringify(templates));
   }
 };

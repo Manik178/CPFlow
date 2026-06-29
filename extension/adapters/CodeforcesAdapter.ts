@@ -180,14 +180,19 @@ export class CodeforcesAdapter implements JudgeAdapter {
   }
 
   async getVerdict(submissionId: string, problemUrl: string): Promise<VerdictDetails> {
-    // We can fetch the specific submission row via POST to data.php
+    let data: any = {};
     try {
       const res = await fetch("https://codeforces.com/data/submitSource", {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: `submissionId=${submissionId}`
       });
-      const data = await res.json();
+      data = await res.json();
+    } catch (e) {
+      console.warn("Failed to fetch submitSource data", e);
+    }
+    
+    try {
       
       // Codeforces /data/submitSource returns compiler output and source, but not always the live verdict if it's running.
       // Alternatively, we fetch the status page.

@@ -35,7 +35,7 @@ export function DrawerTabs() {
         >
           Test Cases
           {activeTab === "testcases" && (
-            <span className="absolute bottom-[-1px] left-0 w-full h-[2px] bg-blue-500 rounded-t-full" />
+            <span className="absolute bottom-[-1px] left-0 w-full h-[1px] bg-blue-500" />
           )}
         </button>
 
@@ -56,7 +56,7 @@ export function DrawerTabs() {
             </span>
           )}
           {activeTab === "output" && (
-            <span className="absolute bottom-[-1px] left-0 w-full h-[2px] bg-blue-500 rounded-t-full" />
+            <span className="absolute bottom-[-1px] left-0 w-full h-[1px] bg-blue-500" />
           )}
         </button>
       </div>

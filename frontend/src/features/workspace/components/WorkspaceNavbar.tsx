@@ -12,18 +12,21 @@ const platformColors: Record<string, string> = {
 
 export function WorkspaceNavbar() {
   const { data: session } = useSession();
-  const { problem, isRunning, handleRunCode, isSubmitting, handleSubmitCode, submissionVerdict } =
+  const { problem, isRunning, handleRunCode, isSubmitting, handleSubmitCode, submissionVerdict, syncState } =
     useWorkspaceContext();
 
   return (
     <header className="h-14 border-b border-zinc-800/60 grid grid-cols-3 items-center px-6 bg-zinc-950/80 backdrop-blur-sm">
       <div className="flex items-center gap-4 justify-start overflow-hidden">
-        <a
-          href="/dashboard"
-          className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors shrink-0"
+        <Button
+          variant="ghost"
+          size="sm"
+          className="gap-1.5 text-zinc-400 hover:text-white px-2 -ml-2 shrink-0"
+          onClick={() => window.location.href = '/dashboard'}
         >
           <ChevronLeft className="w-4 h-4" />
-        </a>
+          Dashboard
+        </Button>
         <h1 className="font-outfit font-bold text-xl bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-emerald-400 shrink-0">
           CPFlow
         </h1>
@@ -79,6 +82,21 @@ export function WorkspaceNavbar() {
       </div>
 
       <div className="flex items-center gap-3 justify-end">
+        {session?.user && problem && (
+          <div className="flex items-center gap-1.5 px-3 py-1 rounded-md bg-zinc-900 border border-zinc-800 shrink-0">
+            {syncState === 'Saving...' ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin text-zinc-400" />
+            ) : syncState === 'Offline' || syncState === 'Sync Failed' ? (
+              <div className="w-2 h-2 rounded-full bg-red-500" />
+            ) : (
+              <div className="w-2 h-2 rounded-full bg-emerald-500" />
+            )}
+            <span className="text-[11px] font-medium text-zinc-400">
+              {syncState}
+            </span>
+          </div>
+        )}
+
         <Button 
           variant="outline" 
           size="sm" 

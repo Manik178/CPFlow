@@ -1,3 +1,21 @@
-# In-memory problem cache (acts as Redis fallback for local dev without Redis)
-# In production, this would be replaced by Redis entirely.
+import os
+import json
+import redis.asyncio as redis
+from dotenv import load_dotenv
+
+load_dotenv()
+
+REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379")
+redis_client = redis.from_url(REDIS_URL, decode_responses=True)
+
+# Legacy fallback for local dev
 _problem_cache: dict[str, dict] = {}
+
+async def get_cache(key: str) -> dict | None:
+    data = await redis_client.get(key)
+    if data:
+        return json.loads(data)
+    return None
+
+async def set_cache(key: str, data: dict, ex: int = 3600):
+    await redis_client.set(key, json.dumps(data), ex=ex)

@@ -5,10 +5,16 @@ import { useTemplates } from "../hooks/useTemplates";
 import { useDrawer } from "../hooks/useDrawer";
 import { useKeyboardShortcuts } from "@/shared/hooks/useKeyboardShortcuts";
 import { LANGUAGE_CONFIG } from "../constants/language";
+import { useWorkspaceRecovery } from "../hooks/useWorkspaceRecovery";
+import { useAutosave } from "../hooks/useAutosave";
+import { useWorkspaceSync, type SyncState } from "../hooks/useWorkspaceSync";
 import type { ProblemData, TestCase, TestResult, Template } from "@/shared/types/workspace";
+import { useSession } from "next-auth/react";
 
 interface WorkspaceContextValue {
   // Problem State
+  isRestoring: boolean;
+  syncState: SyncState;
   problem: ProblemData | null;
   loadingProblem: boolean;
   testCases: TestCase[];
@@ -65,15 +71,43 @@ export function WorkspaceProvider({
   children: React.ReactNode;
   problemId: string | null;
 }) {
-  // 1. Editor State (Local to context since it ties logic together)
+  // 1. Editor State
   const [language, setLanguage] = useState<string>("cpp");
-  const [code, setCode] = useState<string>(LANGUAGE_CONFIG.cpp.template);
+  const [code, setCode] = useState<string>("");
+
+  const { data: session } = useSession();
 
   // 2. Compose Hooks
   const problemHook = useProblem(problemId);
   const drawerHook = useDrawer();
   const judgeHook = useJudge();
-  const templatesHook = useTemplates();
+  const templatesHook = useTemplates(session?.user?.id);
+
+  const { isRestoring } = useWorkspaceRecovery({
+    platform: problemHook.problem?.platform,
+    problemId: problemHook.problem?.problem_id,
+    defaultLanguage: "cpp",
+    setLanguage,
+    setCode,
+    setDrawerHeight: drawerHook.setDrawerHeight,
+    setActiveTab: drawerHook.setActiveTab,
+    setTestCases: problemHook.setTestCases,
+    userId: session?.user?.id,
+  });
+
+  useAutosave({
+    platform: problemHook.problem?.platform,
+    problemId: problemHook.problem?.problem_id,
+    title: problemHook.problem?.title,
+    language,
+    code,
+    drawerHeight: drawerHook.drawerHeight,
+    activeTab: drawerHook.activeTab,
+    testCases: problemHook.testCases,
+    isRestoring,
+  });
+
+  const { syncState } = useWorkspaceSync(session?.user?.id);
 
   // 3. Bind Actions
   const handleRunCode = useCallback(() => {
@@ -110,6 +144,8 @@ export function WorkspaceProvider({
   });
 
   const value: WorkspaceContextValue = {
+    isRestoring,
+    syncState,
     ...problemHook,
     ...drawerHook,
     ...judgeHook,

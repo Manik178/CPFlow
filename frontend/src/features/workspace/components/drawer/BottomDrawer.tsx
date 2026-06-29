@@ -95,8 +95,8 @@ export function BottomDrawer() {
         onMouseDown={handleDragStart}
         onDoubleClick={handleDoubleClick}
       >
-        {/* Visible 2px divider with emerald glow on hover */}
-        <div className="w-full h-[2px] bg-zinc-800 transition-colors group-hover:bg-emerald-500 group-hover:shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+        {/* Visible 2px divider with accent color on hover */}
+        <div className="w-full h-[2px] bg-zinc-800 transition-colors delay-100 duration-200 group-hover:bg-emerald-500/50" />
       </div>
 
       <DrawerTabs />

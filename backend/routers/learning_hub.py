@@ -7,7 +7,7 @@ import json
 # It seems it's in main.py, which causes circular imports.
 # I will import it conditionally or fetch from Redis.
 # But for now, we'll try to import _problem_cache from main.
-from cache import _problem_cache
+from cache import _problem_cache, get_cache, set_cache
 from agents.learning_hub_graph import learning_hub_graph, explain_simply
 
 router = APIRouter(prefix="/api/problems", tags=["Learning Hub"])
@@ -30,6 +30,13 @@ async def get_learning_hub(problem_id: str):
     # Run the graph using astream
     async def event_generator():
         try:
+            # Check Redis for a cached hub
+            cache_key = f"learning_hub:{problem_id}"
+            cached_data = await get_cache(cache_key)
+            if cached_data:
+                yield f"data: {json.dumps({'status': 'complete', 'final_data': cached_data})}\n\n"
+                return
+
             merged_state = {}
             async for output in learning_hub_graph.astream(initial_state):
                 for node_name, state_update in output.items():
@@ -45,6 +52,10 @@ async def get_learning_hub(problem_id: str):
                 "similarProblems": merged_state.get("similar_problems", {}),
                 "resources": merged_state.get("resources", {})
             }
+            
+            # Cache it in Redis for 60 minutes
+            await set_cache(cache_key, final_payload, ex=3600)
+            
             yield f"data: {json.dumps({'status': 'complete', 'final_data': final_payload})}\n\n"
         except Exception as e:
             traceback.print_exc()

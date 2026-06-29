@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Plus_Jakarta_Sans, Outfit } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
+import { Toaster } from "@/components/ui/sonner";
 
 const jakarta = Plus_Jakarta_Sans({ subsets: ["latin"], variable: "--font-sans" });
 const outfit = Outfit({ subsets: ["latin"], variable: "--font-outfit" });
@@ -23,6 +24,7 @@ export default function RootLayout({
       >
         <Providers>
           {children}
+          <Toaster />
         </Providers>
       </body>
     </html>

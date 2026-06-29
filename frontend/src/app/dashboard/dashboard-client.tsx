@@ -1,17 +1,21 @@
 "use client"
 
-import { useQuery } from "@tanstack/react-query"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import type { User } from "next-auth"
 import { signOut } from "next-auth/react"
 import Link from "next/link"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Code2, CheckCircle2 } from "lucide-react"
+import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Code2, CheckCircle2, Trash2, TerminalSquare, PlusCircle } from "lucide-react"
+import { Button, buttonVariants } from "@/components/ui/button"
+import { format } from "date-fns"
 import { CodeforcesAnalytics } from "@/components/analytics/codeforces-analytics"
 import { LeetCodeAnalytics } from "@/components/analytics/leetcode-analytics"
 import { CodeChefAnalytics } from "@/components/analytics/codechef-analytics"
 import { CumulativeAnalytics } from "@/components/analytics/cumulative-analytics"
 import { CumulativeHeatmap } from "@/components/analytics/cumulative-heatmap"
 import { ConnectHandleModal } from "@/components/dashboard/connect-handle-modal"
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog"
+import { Skeleton } from "@/components/ui/skeleton"
 
 export function DashboardClient({ user }: { user: User }) {
   const { data: profile, isLoading, isError } = useQuery({
@@ -24,6 +28,16 @@ export function DashboardClient({ user }: { user: User }) {
     }
   })
 
+  const { data: recentWorkspacesData, isLoading: loadingRecent } = useQuery({
+    queryKey: ["recentWorkspaces", user.id],
+    queryFn: async () => {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000"
+      const res = await fetch(`${apiUrl}/api/workspace/recent/${user.id}?limit=4`)
+      if (!res.ok) throw new Error("Failed to fetch recent workspaces")
+      return res.json()
+    }
+  })
+
   return (
     <div className="p-8 max-w-6xl mx-auto space-y-8 mt-4">
       <div className="flex items-center justify-between border-b border-zinc-800 pb-6 mb-8">
@@ -31,25 +45,34 @@ export function DashboardClient({ user }: { user: User }) {
           <h1 className="text-4xl font-outfit font-bold tracking-tight">Dashboard</h1>
           <p className="mt-2 text-lg text-muted-foreground">Welcome back, {user.name}!</p>
         </div>
-        <div className="flex gap-4 items-center">
-          <Link href="/contests" className="px-4 py-2 rounded-full bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 transition-colors text-sm font-medium">
+        <div className="flex gap-3 items-center">
+          <Link href="/contests/past" className={buttonVariants({ variant: "outline", className: "rounded-full" })}>
+            Past Contests
+          </Link>
+          <Link href="/contests" className={buttonVariants({ variant: "outline", className: "rounded-full" })}>
             Contest Tracker
           </Link>
-          <Link href="/workspace" className="px-4 py-2 rounded-full bg-white text-zinc-950 hover:bg-zinc-200 transition-colors text-sm font-medium">
+          <Link href="/workspace" className={buttonVariants({ className: "rounded-full" })}>
             Workspace
           </Link>
-          <button 
+          <Button 
+            variant="ghost" 
+            className="rounded-full text-red-500 hover:text-red-500 hover:bg-red-500/10"
             onClick={() => signOut({ callbackUrl: "/login" })} 
-            className="px-4 py-2 rounded-full bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-colors text-sm font-medium"
           >
             Sign Out
-          </button>
+          </Button>
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {isLoading ? (
-          <p className="text-sm text-muted-foreground">Loading connected handles...</p>
+          <>
+            <Skeleton className="h-[120px] w-full" />
+            <Skeleton className="h-[120px] w-full" />
+            <Skeleton className="h-[120px] w-full" />
+            <Skeleton className="h-[120px] w-full" />
+          </>
         ) : isError ? (
           <p className="text-sm text-destructive">Failed to load handles. Is the backend running?</p>
         ) : (
@@ -86,6 +109,50 @@ export function DashboardClient({ user }: { user: User }) {
       </div>
 
       <div className="pt-8 space-y-12">
+        {/* Continue Solving Section */}
+        <div className="space-y-4">
+          <h2 className="text-2xl font-outfit font-semibold tracking-tight border-b border-zinc-800 pb-2">Continue Solving</h2>
+          {!loadingRecent && recentWorkspacesData?.workspaces?.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {recentWorkspacesData.workspaces.map((ws: any) => (
+                <Link key={`${ws.platform}-${ws.problemId}`} href={`/workspace?platform=${ws.platform}&pid=${ws.problemId}`} className="block group">
+                  <Card className="bg-zinc-900/20 border-zinc-800/50 group-hover:bg-zinc-900/60 group-hover:border-zinc-700 transition-all duration-300 ease-out h-full">
+                    <CardHeader className="p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs font-medium text-zinc-500 bg-zinc-950 px-2 py-1 rounded-md">{ws.platform}</span>
+                        <span className="text-[10px] text-zinc-500">{new Date(ws.updatedAt).toLocaleDateString()}</span>
+                      </div>
+                      <CardTitle className="text-base font-medium text-zinc-200 group-hover:text-emerald-400 transition-colors truncate">
+                        {(ws as any).title || ws.problemId}
+                      </CardTitle>
+                      <CardDescription className="text-xs text-zinc-400 mt-1">
+                        {ws.language}
+                      </CardDescription>
+                    </CardHeader>
+                  </Card>
+                </Link>
+              ))}
+            </div>
+          ) : !loadingRecent ? (
+            <div className="flex flex-col items-center justify-center p-12 text-center border border-dashed border-zinc-800 rounded-xl bg-zinc-900/10">
+              <TerminalSquare className="w-12 h-12 text-zinc-600 mb-4" />
+              <h3 className="text-lg font-medium text-zinc-300">No recent workspaces</h3>
+              <p className="text-sm text-zinc-500 mt-1 max-w-sm mb-6">You haven't opened any problems recently. Start solving to see them here.</p>
+              <Link href="/workspace" className={buttonVariants({ variant: "default" })}>
+                <PlusCircle className="w-4 h-4 mr-2" />
+                New Workspace
+              </Link>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <Skeleton className="h-[100px] w-full" />
+              <Skeleton className="h-[100px] w-full" />
+              <Skeleton className="h-[100px] w-full" />
+              <Skeleton className="h-[100px] w-full" />
+            </div>
+          )}
+        </div>
+
         {profile && (
           <div className="space-y-6">
             <CumulativeAnalytics profile={profile} />
@@ -97,12 +164,40 @@ export function DashboardClient({ user }: { user: User }) {
   )
 }
 
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog"
-
 function HandleCard({ userId, platform, handle, color, analytics }: { userId: string, platform: string, handle?: string | null, color: string, analytics?: React.ReactNode }) {
+  const queryClient = useQueryClient()
+  const removeMutation = useMutation({
+    mutationFn: async () => {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000"
+      const currentRes = await fetch(`${apiUrl}/api/users/${userId}/profile`)
+      if (!currentRes.ok) throw new Error("Failed to fetch profile")
+      const currentProfile = await currentRes.json()
+
+      const updatedHandles = {
+        ...currentProfile.handles,
+        [platform.toLowerCase()]: ""
+      }
+
+      const res = await fetch(`${apiUrl}/api/users/${userId}/profile`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          handles: updatedHandles,
+          preferences: currentProfile.preferences
+        })
+      })
+
+      if (!res.ok) throw new Error("Failed to update handle")
+      return res.json()
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["userProfile", userId] })
+    }
+  })
+
   if (!handle) {
     return (
-      <Card className="bg-zinc-900/40 border-zinc-800/50 hover:bg-zinc-900/60 transition-colors">
+      <Card className="bg-zinc-900/20 border-zinc-800/50 hover:bg-zinc-900/50 hover:border-zinc-700/50 transition-all duration-300 ease-out">
         <CardHeader className="pb-4">
           <CardDescription className="flex items-center gap-2">
             <Code2 className={`w-4 h-4 ${color}`} />
@@ -122,7 +217,7 @@ function HandleCard({ userId, platform, handle, color, analytics }: { userId: st
   return (
     <Dialog>
       <DialogTrigger nativeButton={false} render={<div className="cursor-pointer group block" />}>
-          <Card className="bg-zinc-900/40 border-zinc-800/50 group-hover:bg-zinc-900/60 transition-colors h-full">
+          <Card className="bg-zinc-900/20 border-zinc-800/50 group-hover:bg-zinc-900/50 group-hover:border-zinc-700/50 transition-all duration-300 ease-out h-full">
             <CardHeader className="pb-4">
               <CardDescription className="flex items-center gap-2">
                 <Code2 className={`w-4 h-4 ${color}`} />
@@ -135,6 +230,20 @@ function HandleCard({ userId, platform, handle, color, analytics }: { userId: st
                     <CheckCircle2 className="w-4 h-4 text-emerald-500" />
                   </span>
                 </CardTitle>
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (window.confirm(`Are you sure you want to remove your ${platform} handle?`)) {
+                      removeMutation.mutate();
+                    }
+                  }}
+                  disabled={removeMutation.isPending}
+                  className="p-2 text-zinc-500 hover:text-red-500 hover:bg-red-500/10 rounded-md transition-colors"
+                  title="Remove Handle"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
               </div>
             </CardHeader>
           </Card>

@@ -2,14 +2,14 @@ import { useState, useEffect } from "react";
 import { templateService } from "../services/template.service";
 import type { Template } from "@/shared/types/workspace";
 
-export function useTemplates() {
+export function useTemplates(userId?: string) {
   const [savedTemplates, setSavedTemplates] = useState<Template[]>([]);
   const [templateName, setTemplateName] = useState("");
   const [isTemplateDialogOpen, setIsTemplateDialogOpen] = useState(false);
 
   useEffect(() => {
-    setSavedTemplates(templateService.getTemplates());
-  }, []);
+    setSavedTemplates(templateService.getTemplates(userId));
+  }, [userId]);
 
   const handleSaveTemplate = (code: string, language: string) => {
     if (!templateName.trim()) return;
@@ -22,14 +22,14 @@ export function useTemplates() {
     };
     const newTemplates = [...savedTemplates, newTemplate];
     setSavedTemplates(newTemplates);
-    templateService.saveTemplates(newTemplates);
+    templateService.saveTemplates(newTemplates, userId);
     setTemplateName("");
   };
 
   const handleDeleteTemplate = (id: string) => {
     const newTemplates = savedTemplates.filter((t) => t.id !== id);
     setSavedTemplates(newTemplates);
-    templateService.saveTemplates(newTemplates);
+    templateService.saveTemplates(newTemplates, userId);
   };
 
   return {
