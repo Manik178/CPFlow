@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query"
 import type { User } from "next-auth"
+import { signOut } from "next-auth/react"
 import Link from "next/link"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Code2, CheckCircle2 } from "lucide-react"
@@ -30,13 +31,19 @@ export function DashboardClient({ user }: { user: User }) {
           <h1 className="text-4xl font-outfit font-bold tracking-tight">Dashboard</h1>
           <p className="mt-2 text-lg text-muted-foreground">Welcome back, {user.name}!</p>
         </div>
-        <div className="flex gap-4">
+        <div className="flex gap-4 items-center">
           <Link href="/contests" className="px-4 py-2 rounded-full bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 transition-colors text-sm font-medium">
             Contest Tracker
           </Link>
           <Link href="/workspace" className="px-4 py-2 rounded-full bg-white text-zinc-950 hover:bg-zinc-200 transition-colors text-sm font-medium">
             Workspace
           </Link>
+          <button 
+            onClick={() => signOut({ callbackUrl: "/login" })} 
+            className="px-4 py-2 rounded-full bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-colors text-sm font-medium"
+          >
+            Sign Out
+          </button>
         </div>
       </div>
 

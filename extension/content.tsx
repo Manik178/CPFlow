@@ -1,69 +1,97 @@
+import cssText from "data-text:~style.css"
 import type { PlasmoCSConfig } from "plasmo"
+import { useEffect, useState } from "react"
+import { createRoot } from "react-dom/client"
 import { scrapeProblem } from "./scrapers"
-import { useState } from "react"
+import { CodeforcesAdapter } from "./adapters/CodeforcesAdapter"
+import { CsesAdapter } from "./adapters/CsesAdapter"
+import type { ExtensionRequest } from "./shared/types"
 
 export const config: PlasmoCSConfig = {
   matches: [
-    "https://codeforces.com/contest/*/problem/*",
-    "https://codeforces.com/problemset/problem/*/*",
-    "https://codeforces.com/problemset/gymProblem/*/*",
-    "https://codeforces.com/gym/*/problem/*",
-    "https://codeforces.com/group/*/contest/*/problem/*",
-    "https://cses.fi/problemset/task/*"
+    "https://codeforces.com/*",
+    "https://cses.fi/problemset/*"
   ]
 }
 
 const CPFLOW_URL = "http://localhost:3000"
 const API_URL = "http://localhost:8000"
 
-// Listen for submission requests from CPFlow background worker
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  if (request.action === "SUBMIT_CODE") {
-    const { code, language } = request.data
-    const url = window.location.href
+const cfAdapter = new CodeforcesAdapter();
+const csesAdapter = new CsesAdapter();
 
-    if (url.includes("codeforces.com")) {
-      submitToCodeforces(code, language, sendResponse)
-    } else {
-      sendResponse({ success: false, error: "Auto-submit not supported for this platform yet." })
-    }
-    return true // async
-  }
-})
+function getAdapter(): import("./shared/types").JudgeAdapter | null {
+  const url = window.location.href;
+  if (url.includes("codeforces.com")) return cfAdapter;
+  if (url.includes("cses.fi")) return csesAdapter;
+  return null;
+}
 
-function submitToCodeforces(code: string, language: string, sendResponse: (res: any) => void) {
+// Guard: check if extension context is still valid before messaging
+function isExtensionValid(): boolean {
   try {
-    const csrfTokenMeta = document.querySelector('meta[name="X-Csrf-Token"]') as HTMLMetaElement
-    const csrfToken = csrfTokenMeta ? csrfTokenMeta.content : ""
-
-    // Codeforces language mapping: 54 is GCC 12, 70 is Python 3
-    const programTypeId = language === "cpp" ? "54" : language === "python" ? "70" : "60"
-
-    // To submit silently, we can fill the form if it exists on the page
-    const form = document.querySelector("form.submit-form") as HTMLFormElement | null
-    if (form) {
-      const sourceInput = form.querySelector('textarea[name="source"]') as HTMLTextAreaElement
-      const langSelect = form.querySelector('select[name="programTypeId"]') as HTMLSelectElement
-      
-      if (sourceInput && langSelect) {
-        sourceInput.value = code
-        langSelect.value = programTypeId
-        
-        // Trigger submit
-        form.submit()
-        sendResponse({ success: true, message: "Codeforces submission initiated!" })
-        return
-      }
-    }
-    
-    sendResponse({ success: false, error: "Could not find Codeforces submit form on this page." })
-  } catch (err) {
-    sendResponse({ success: false, error: String(err) })
+    return !!chrome.runtime?.id;
+  } catch {
+    return false;
   }
 }
 
+chrome.runtime.onMessage.addListener((request: ExtensionRequest, sender, sendResponse) => {
+  if (!isExtensionValid()) {
+    return false;
+  }
+
+  const adapter = getAdapter();
+  if (!adapter) {
+    sendResponse({ success: false, error: "Platform not supported." });
+    return true;
+  }
+
+  (async () => {
+    try {
+      let data = null;
+      switch (request.action) {
+        case "CHECK_LOGIN":
+          data = await adapter.checkLogin();
+          break;
+        case "GET_LANGUAGES":
+          data = await adapter.getLanguages();
+          break;
+        case "SUBMIT":
+          const res = await adapter.submit(request.data.code, request.data.language, window.location.href);
+          if (!res.success) throw new Error(res.error);
+          data = res;
+          break;
+        case "GET_VERDICT":
+          data = await adapter.getVerdict(request.data.submissionId, window.location.href);
+          break;
+        case "GET_LATEST_SUBMISSION":
+          data = await adapter.getLatestSubmission(window.location.href);
+          break;
+        case "SYNC_SOLVED":
+          data = await adapter.syncSolved();
+          break;
+        case "DETECT_CURRENT_PROBLEM":
+          data = await adapter.detectProblem();
+          break;
+        default:
+          throw new Error(`Unknown action: ${request.action}`);
+      }
+      sendResponse({ success: true, data });
+    } catch (e: any) {
+      sendResponse({ success: false, error: e.message || String(e) });
+    }
+  })();
+
+  return true; // async
+});
+
 export default function CPFlowOverlay() {
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle")
+
+  // Only render the overlay on actual problem pages (not submit/status pages)
+  const isProblemPage = window.location.pathname.includes("/problem/") || window.location.pathname.includes("/task/")
+  if (!isProblemPage) return null
 
   const handleOpenInCPFlow = async () => {
     setStatus("loading")
@@ -74,7 +102,6 @@ export default function CPFlowOverlay() {
         return
       }
 
-      // Send to backend — it caches in Redis and returns a problem_id
       const res = await fetch(`${API_URL}/api/problems/import`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -85,8 +112,6 @@ export default function CPFlowOverlay() {
       const data = await res.json()
 
       setStatus("success")
-
-      // Open CPFlow workspace with the problem_id
       window.open(`${CPFLOW_URL}/workspace?pid=${data.problem_id}`, "_blank")
     } catch (e) {
       console.error("CPFlow scraping error:", e)
@@ -144,3 +169,4 @@ export default function CPFlowOverlay() {
     </div>
   )
 }
+

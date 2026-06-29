@@ -52,7 +52,7 @@ export function LeetCodeAnalytics({ handle }: { handle: string }) {
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
-                  data={data.difficultyDistribution}
+                  data={data.difficultyDistribution || []}
                   cx="50%"
                   cy="50%"
                   innerRadius={70}
@@ -61,7 +61,7 @@ export function LeetCodeAnalytics({ handle }: { handle: string }) {
                   dataKey="value"
                   stroke="none"
                 >
-                  {data.difficultyDistribution.map((entry: any, index: number) => (
+                  {(data.difficultyDistribution || []).map((entry: any, index: number) => (
                     <Cell key={`cell-${index}`} fill={entry.fill} />
                   ))}
                 </Pie>
@@ -73,7 +73,7 @@ export function LeetCodeAnalytics({ handle }: { handle: string }) {
             </ResponsiveContainer>
           </div>
           <div className="flex-1 w-full grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {data.difficultyDistribution.map((d: any) => (
+            {(data.difficultyDistribution || []).map((d: any) => (
               <div key={d.name} className="flex flex-col items-center justify-center p-4 rounded-xl bg-zinc-900 border border-zinc-800/50">
                 <div className="flex items-center gap-2 mb-2">
                   <div className="w-3 h-3 rounded-full" style={{ backgroundColor: d.fill }} />

@@ -22,7 +22,7 @@ export default function LoginPage() {
           <form
             action={async () => {
               "use server"
-              await signIn("google", { redirectTo: "/onboarding" })
+              await signIn("google", { redirectTo: "/dashboard" })
             }}
           >
             <Button type="submit" className="w-full h-11 text-base font-medium">

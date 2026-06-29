@@ -1,26 +1,18 @@
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  if (request.action === "RELAY_TO_PLATFORM") {
-    const { problemUrl, code, language } = request.data
+import { handleRelayToPlatform } from "./background/messageRouter";
+import type { ExtensionRequest } from "./shared/types";
 
-    // Find the tab that matches the problem URL
-    chrome.tabs.query({}, (tabs) => {
-      // Find a tab that roughly matches the problem URL (ignoring query params/hashes)
-      const targetTab = tabs.find(t => t.url && t.url.split('?')[0].split('#')[0] === problemUrl.split('?')[0].split('#')[0])
-      
-      if (targetTab && targetTab.id) {
-        chrome.tabs.sendMessage(targetTab.id, {
-          action: "SUBMIT_CODE",
-          data: { code, language }
-        }, (response) => {
-          sendResponse(response || { success: true })
-        })
-      } else {
-        console.error("CPFlow: Could not find active tab for", problemUrl)
-        sendResponse({ success: false, error: "Tab not found. Make sure the problem tab is still open." })
-      }
-    })
-    
-    // Return true to indicate we will send a response asynchronously
-    return true
+chrome.runtime.onMessage.addListener((request: ExtensionRequest, sender, sendResponse) => {
+  // We route all CPFlow bridge requests to the corresponding tab
+  if (
+    request.action === "SUBMIT" ||
+    request.action === "CHECK_LOGIN" ||
+    request.action === "GET_LANGUAGES" ||
+    request.action === "GET_VERDICT" ||
+    request.action === "GET_LATEST_SUBMISSION" ||
+    request.action === "SYNC_SOLVED" ||
+    request.action === "DETECT_CURRENT_PROBLEM"
+  ) {
+    handleRelayToPlatform(request, sendResponse);
+    return true; // async
   }
-})
+});

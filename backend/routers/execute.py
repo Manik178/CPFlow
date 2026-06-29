@@ -121,7 +121,14 @@ async def run_code(request: CodeExecutionRequest):
     elif run_code is not None and run_code != 0:
         status = STATUS_RTE
     else:
-        status = STATUS_ACCEPTED
+        if request.expected_output is not None:
+            # Compare output ignoring trailing whitespace
+            if stdout.strip() == request.expected_output.strip():
+                status = STATUS_ACCEPTED
+            else:
+                status = {"id": 4, "description": "Wrong Answer"}
+        else:
+            status = STATUS_ACCEPTED
 
     return {
         "stdout": stdout or None,
@@ -130,6 +137,7 @@ async def run_code(request: CodeExecutionRequest):
         "time": "0.000",  # Piston doesn't return wall-clock time; could be measured if needed
         "memory": 0,
         "status": status,
+        "passed": status["id"] == 3,
     }
 
 

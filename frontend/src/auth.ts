@@ -7,16 +7,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     signIn: "/login",
   },
   callbacks: {
-    async session({ session, user, token }) {
-      // In Auth.js v5, the user id is inside token.sub when using JWT
-      if (session.user && token.sub) {
-        session.user.id = token.sub
+    async session({ session, token }) {
+      // Use email as the stable identifier since OAuth UUIDs can be unstable without a DB adapter
+      if (session.user && token.email) {
+        session.user.id = token.email
       }
       return session
     },
     async jwt({ token, user }) {
-      if (user) {
-        token.sub = user.id
+      if (user && user.email) {
+        token.email = user.email
       }
       return token
     }

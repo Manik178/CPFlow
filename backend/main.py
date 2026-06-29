@@ -3,17 +3,17 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import httpx
 import os
+from dotenv import load_dotenv
 import json
+
+load_dotenv()
 import hashlib
 
 from contextlib import asynccontextmanager
 
 from database import engine, Base
-from routers import users, analytics, contests, execute
-
-# In-memory problem cache (acts as Redis fallback for local dev without Redis)
-# In production, this would be replaced by Redis entirely.
-_problem_cache: dict[str, dict] = {}
+from routers import users, analytics, contests, execute, learning_hub
+from cache import _problem_cache
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -38,6 +38,7 @@ app.include_router(users.router)
 app.include_router(analytics.router)
 app.include_router(contests.router)
 app.include_router(execute.router)
+app.include_router(learning_hub.router)
 
 class ProblemImportRequest(BaseModel):
     title: str

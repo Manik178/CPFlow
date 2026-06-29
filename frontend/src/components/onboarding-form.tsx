@@ -100,7 +100,7 @@ export function OnboardingForm({ user }: { user: User }) {
           <Button 
             type="button" 
             variant="outline" 
-            onClick={() => router.push("/dashboard")}
+            onClick={(e) => { e.preventDefault(); handleSubmit(e); }}
             disabled={onboardMutation.isPending}
           >
             Skip for now
