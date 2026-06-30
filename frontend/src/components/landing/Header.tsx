@@ -35,11 +35,10 @@ export function Header({ session }: { session: any }) {
       
       <nav className="hidden lg:flex items-center gap-8 text-sm font-medium text-zinc-400">
         <Link href="#features" className="hover:text-white transition-colors">Features</Link>
-        <Link href="#screenshots" className="hover:text-white transition-colors">Screenshots</Link>
-        <Link href="#developers" className="hover:text-white transition-colors">For Developers</Link>
-        <Link href="#pricing" className="hover:text-white transition-colors">Pricing</Link>
-        <Link href="#docs" className="hover:text-white transition-colors">Docs</Link>
-        <Link href="#changelog" className="hover:text-white transition-colors">Changelog</Link>
+        <Link href="#how-it-works" className="hover:text-white transition-colors">How it Works</Link>
+        <Link href="#metrics" className="hover:text-white transition-colors">Metrics</Link>
+        <Link href="#why-cpflow" className="hover:text-white transition-colors">Why CPFlow</Link>
+        <Link href="#faq" className="hover:text-white transition-colors">FAQ</Link>
       </nav>
 
       <div className="flex items-center gap-4">

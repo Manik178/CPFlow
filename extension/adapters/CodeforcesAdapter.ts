@@ -143,12 +143,24 @@ export class CodeforcesAdapter implements JudgeAdapter {
   }
 
   async getLatestSubmission(problemUrl: string): Promise<SubmissionDetails | null> {
-    // Navigate to /my to get user submissions, or just parse the "Last submissions" sidebar if on problem page
-    const mySubmissionsLink = document.querySelector('a[href$="/my"]') as HTMLAnchorElement;
-    if (!mySubmissionsLink) return null;
-
     try {
-      const res = await fetch(mySubmissionsLink.href);
+      const urlObj = new URL(problemUrl);
+      const origin = urlObj.origin;
+      const path = urlObj.pathname;
+      
+      let mySubmissionsUrl = "";
+      const gymMatch = path.match(/^\/gym\/(\d+)/);
+      const contestMatch = path.match(/^\/contest\/(\d+)/);
+      
+      if (gymMatch) {
+         mySubmissionsUrl = `${origin}/gym/${gymMatch[1]}/my`;
+      } else if (contestMatch) {
+         mySubmissionsUrl = `${origin}/contest/${contestMatch[1]}/my`;
+      } else {
+         mySubmissionsUrl = `${origin}/problemset/status?my=on`;
+      }
+
+      const res = await fetch(mySubmissionsUrl);
       const text = await res.text();
       const parser = new DOMParser();
       const doc = parser.parseFromString(text, "text/html");

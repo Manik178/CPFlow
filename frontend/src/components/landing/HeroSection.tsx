@@ -120,10 +120,12 @@ export function HeroSection({ session }: { session?: any }) {
                 </Button>
               </Link>
             )}
-            <Button size="lg" variant="outline" className="h-12 px-8 text-base rounded-full font-medium border-zinc-700 bg-zinc-900/50 hover:bg-zinc-800 text-zinc-300 gap-2">
-              Install Extension
-              <ChromeIcon className="w-5 h-5" />
-            </Button>
+            <a href="/cpflow-extension.zip" download="cpflow-extension.zip">
+              <Button size="lg" variant="outline" className="h-12 px-8 text-base rounded-full font-medium border-zinc-700 bg-zinc-900/50 hover:bg-zinc-800 text-zinc-300 gap-2">
+                Install Extension
+                <ChromeIcon className="w-5 h-5" />
+              </Button>
+            </a>
           </motion.div>
           
           <motion.p 

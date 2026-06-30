@@ -17,7 +17,8 @@ const isPublicRoute = (pathname: string) => {
   return PUBLIC_ROUTES.some(route => pathname.startsWith(route));
 };
 
-async function handleRequest(request: NextRequest, { params }: { params: { proxy: string[] } }) {
+async function handleRequest(request: NextRequest, context: { params: Promise<{ proxy: string[] }> }) {
+  const { proxy } = await context.params;
   const pathname = new URL(request.url).pathname;
   
   // Validate NextAuth session
@@ -49,7 +50,7 @@ async function handleRequest(request: NextRequest, { params }: { params: { proxy
   const targetUrl = `${BACKEND_URL}${pathname}${new URL(request.url).search}`;
   
   try {
-    const init: RequestInit = {
+    const init = {
       method: request.method,
       headers,
       // Only attach body if method is not GET/HEAD
@@ -81,3 +82,14 @@ export const POST = handleRequest;
 export const PUT = handleRequest;
 export const DELETE = handleRequest;
 export const PATCH = handleRequest;
+
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 204,
+    headers: {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, PATCH, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    },
+  });
+}

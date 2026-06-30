@@ -16,6 +16,7 @@ import { CumulativeAnalytics } from "@/components/analytics/cumulative-analytics
 import { CumulativeHeatmap } from "@/components/analytics/cumulative-heatmap"
 import { ConnectHandleModal } from "@/components/dashboard/connect-handle-modal"
 import { Dialog, DialogContent, DialogTrigger, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
+import { RecommendationsModal } from "@/components/dashboard/recommendations-modal"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Skeleton } from "@/components/ui/skeleton"
 
@@ -54,6 +55,7 @@ export function DashboardClient({ user }: { user: User }) {
           <Link href="/contests" className={buttonVariants({ variant: "outline", className: "rounded-full" })}>
             Contest Tracker
           </Link>
+          <RecommendationsModal />
           <Dialog>
             <DialogTrigger render={<Button variant="outline" className="rounded-full" />}>
               Continue Solving

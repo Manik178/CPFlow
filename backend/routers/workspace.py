@@ -141,7 +141,7 @@ async def get_workspace_state(
             WorkspaceDraft.problem_id == problem_id
         )
         draft_result = await db.execute(draft_stmt)
-        draft = draft_result.scalars().first()
+        drafts = draft_result.scalars().all()
         
         layout_stmt = select(WorkspaceLayout).where(
             WorkspaceLayout.user_id == current_user.id,
@@ -152,11 +152,11 @@ async def get_workspace_state(
         layout = layout_result.scalars().first()
         
         return {
-            "draft": {
-                "code": draft.code,
-                "language": draft.language,
-                "updatedAt": draft.updated_at.timestamp() * 1000
-            } if draft else None,
+            "drafts": [{
+                "code": d.code,
+                "language": d.language,
+                "updatedAt": d.updated_at.timestamp() * 1000
+            } for d in drafts],
             "layout": {
                 "drawerHeight": layout.drawer_height,
                 "activeTab": layout.active_tab,

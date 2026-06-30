@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import httpx
@@ -12,7 +12,7 @@ import hashlib
 from contextlib import asynccontextmanager
 
 from database import engine, Base
-from routers import users, analytics, contests, execute, learning_hub, workspace
+from routers import users, analytics, contests, execute, learning_hub, workspace, recommendations
 from cache import _problem_cache, get_cache, set_cache
 
 @asynccontextmanager
@@ -40,6 +40,7 @@ app.include_router(contests.router)
 app.include_router(execute.router)
 app.include_router(learning_hub.router)
 app.include_router(workspace.router)
+app.include_router(recommendations.router)
 
 class ProblemImportRequest(BaseModel):
     title: str
@@ -52,11 +53,13 @@ class ProblemImportRequest(BaseModel):
     difficulty: str | None = None
     samples: list[dict] = []
 
+from auth.dependencies import RateLimiter
+
 @app.get("/")
 def read_root():
     return {"status": "ok", "message": "Welcome to CPFlow API"}
 
-@app.post("/api/problems/import")
+@app.post("/api/problems/import", dependencies=[Depends(RateLimiter(requests=10, window=60))])
 async def import_problem(problem: ProblemImportRequest):
     """
     Receives scraped problem data from the extension, caches it, and returns a problem_id.

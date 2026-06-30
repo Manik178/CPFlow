@@ -50,23 +50,20 @@ export function useWorkspaceRecovery({
               if (remote.layout) {
                 if (!layout || remote.layout.updatedAt > layout.updatedAt) {
                   layout = remote.layout;
-                }
-              }
-              if (remote.draft) {
-                const localDraft = await getDraft(platform, problemId, remote.draft.language);
-                if (!localDraft || remote.draft.updatedAt > localDraft.updatedAt) {
-                  // We should load the remote draft! But we don't save it directly here, we just use it
-                  // Wait, actually we can just overwrite the local state in IndexedDB if remote is newer
-                  // For simplicity, we just inject it into our variables so they get loaded.
                   await import('../db/indexeddb').then(m => {
-                    if (remote.layout) {
-                      m.saveLayout(platform, problemId, remote.layout.activeLanguage, remote.layout.drawerHeight, remote.layout.activeTab);
-                    }
-                    if (remote.draft) {
-                      m.saveDraft(platform, problemId, remote.draft.language, remote.draft.code);
-                    }
+                    m.saveLayout(platform, problemId, remote.layout.activeLanguage, remote.layout.drawerHeight, remote.layout.activeTab);
                   });
                 }
+              }
+              if (remote.drafts && Array.isArray(remote.drafts)) {
+                await import('../db/indexeddb').then(async (m) => {
+                  for (const remoteDraft of remote.drafts) {
+                    const localDraft = await getDraft(platform, problemId, remoteDraft.language);
+                    if (!localDraft || remoteDraft.updatedAt > localDraft.updatedAt) {
+                      m.saveDraft(platform, problemId, remoteDraft.language, remoteDraft.code);
+                    }
+                  }
+                });
               }
             }
           } catch (e) {

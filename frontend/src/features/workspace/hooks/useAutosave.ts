@@ -27,7 +27,7 @@ export function useAutosave({
   delay = 2000,
   isRestoring,
 }: AutosaveParams) {
-  const timeoutRef = useRef<NodeJS.Timeout>();
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     // Prevent autosaving default values while IndexedDB is still restoring

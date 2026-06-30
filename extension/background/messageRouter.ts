@@ -23,10 +23,29 @@ export function handleRelayToPlatform(
       return u;
     };
 
-    const targetTab = tabs.find((t) => {
+    // First try to find an exact URL match
+    let targetTab = tabs.find((t) => {
       if (!t.url) return false;
       return normalizeUrl(t.url) === normalizeUrl(problemUrl);
     });
+
+    // If exact match is not found, fallback to ANY active tab on the same domain.
+    // The adapters use relative URL fetching, so any authenticated tab works!
+    if (!targetTab) {
+      try {
+        const problemDomain = new URL(problemUrl).hostname;
+        targetTab = tabs.find((t) => {
+          if (!t.url) return false;
+          try {
+            return new URL(t.url).hostname === problemDomain;
+          } catch {
+            return false;
+          }
+        });
+      } catch (e) {
+        // invalid problemUrl, fallback will fail
+      }
+    }
 
     if (targetTab && targetTab.id) {
       chrome.tabs.sendMessage(

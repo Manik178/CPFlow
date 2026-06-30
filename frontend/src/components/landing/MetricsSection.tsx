@@ -5,7 +5,7 @@ import { AnimatedCounter } from "./AnimatedCounter";
 
 export function MetricsSection() {
   return (
-    <section className="relative w-full border-y border-zinc-800/50 bg-zinc-950/30">
+    <section id="metrics" className="relative w-full border-y border-zinc-800/50 bg-zinc-950/30">
       <div className="py-12 md:py-20 px-6 md:px-12 max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-12">
         <motion.div 
           initial={{ opacity: 0, y: 20 }}

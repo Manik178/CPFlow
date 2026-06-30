@@ -5,6 +5,8 @@ import { Separator } from "@/components/ui/separator";
 import { useSession, signIn, signOut } from "next-auth/react";
 import { useWorkspaceContext } from "../context/WorkspaceContext";
 
+import { WorkspaceStopwatch } from "./WorkspaceStopwatch";
+
 const platformColors: Record<string, string> = {
   Codeforces: "text-blue-400",
   CSES: "text-emerald-400",
@@ -48,6 +50,8 @@ export function WorkspaceNavbar() {
       </div>
 
       <div className="flex items-center justify-center gap-3">
+        <WorkspaceStopwatch />
+        
         <Button
           size="sm"
           onClick={handleRunCode}

@@ -1,14 +1,14 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { Loader2, Lightbulb, ChevronLeft, CheckCircle2, Circle } from "lucide-react";
 import { LearningHubLayout } from "@/features/learning-hub/components/LearningHubLayout";
 import { ExplainPopover } from "@/features/learning-hub/components/ExplainPopover";
 import { LearningHubData } from "@/features/learning-hub/types";
 import { Button } from "@/components/ui/button";
 
-export default function LearningHubPage() {
+function LearningHubContent() {
   const searchParams = useSearchParams();
   const pid = searchParams.get("pid");
   
@@ -162,5 +162,17 @@ export default function LearningHubPage() {
         ) : null}
       </main>
     </div>
+  );
+}
+
+export default function LearningHubPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-blue-400 animate-spin" />
+      </div>
+    }>
+      <LearningHubContent />
+    </Suspense>
   );
 }

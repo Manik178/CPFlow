@@ -5,7 +5,7 @@ export type SyncState = 'Saved Locally' | 'Saving...' | 'Synced' | 'Offline' | '
 
 export function useWorkspaceSync(userId: string | undefined) {
   const [syncState, setSyncState] = useState<SyncState>('Saved Locally');
-  const syncIntervalRef = useRef<NodeJS.Timeout>();
+  const syncIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     if (!userId || typeof window === 'undefined') return;

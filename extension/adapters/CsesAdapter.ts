@@ -21,7 +21,7 @@ export class CsesAdapter implements JudgeAdapter {
 
   async submit(code: string, languageId: string, problemUrl: string): Promise<{ success: boolean; submissionId?: string; error?: string }> {
     try {
-      const match = window.location.pathname.match(/task\/(\d+)/);
+      const match = new URL(problemUrl).pathname.match(/task\/(\d+)/);
       if (!match) {
         return { success: false, error: "Could not parse task ID from URL." };
       }
@@ -41,11 +41,11 @@ export class CsesAdapter implements JudgeAdapter {
       
       // Map CPFlow language ID to CSES select values
       const csesLangMapping: Record<string, string> = {
-          "C++": "C++",
-          "Java": "Java",
-          "Python3": "Python3",
-          "Rust": "Rust",
-          "Haskell": "Haskell",
+          "cpp": "C++",
+          "java": "Java",
+          "python": "Python3",
+          "rust": "Rust",
+          "haskell": "Haskell",
       };
       
       const langSelect = form.querySelector('select[name="lang"]') as HTMLSelectElement;
@@ -56,11 +56,21 @@ export class CsesAdapter implements JudgeAdapter {
       }
       
       const blob = new Blob([code], { type: "text/plain" });
-      const ext = languageId === "Python3" ? "py" : languageId === "Java" ? "java" : "cpp";
+      const ext = languageId === "python" ? "py" : languageId === "java" ? "java" : "cpp";
+      
+      let filename = `solution.${ext}`;
+      if (languageId === "java") {
+        const publicClassMatch = code.match(/public\s+class\s+([a-zA-Z0-9_]+)/);
+        if (publicClassMatch && publicClassMatch[1]) {
+          filename = `${publicClassMatch[1]}.java`;
+        } else {
+          filename = "Main.java"; // Safer default for Java
+        }
+      }
       
       const fileInput = form.querySelector('input[type="file"]') as HTMLInputElement;
       const fileInputName = fileInput ? fileInput.name : "file";
-      formData.set(fileInputName, blob, `solution.${ext}`);
+      formData.set(fileInputName, blob, filename);
 
       // We intercept the redirect to get the submission ID!
       const targetUrl = form.action || `/problemset/submit/${taskId}/`;
@@ -211,7 +221,8 @@ export class CsesAdapter implements JudgeAdapter {
 
       // 5. Ultimate fallback (could be a parse failure)
       const debugText = contentDiv.textContent?.replace(/\s+/g, ' ').substring(0, 100) || "EMPTY";
-      return { status: (`DEBUG: ${debugText}` as any) };
+      console.error("CSES Verdict Parse Fallback (DEBUG):", debugText);
+      return { status: "Unknown" };
     } catch (e) {
       return { status: "Unknown" };
     }

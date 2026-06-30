@@ -26,7 +26,7 @@ export function EdgeSection() {
   ];
 
   return (
-    <section ref={containerRef} className="relative w-full border-t border-zinc-800/50 bg-zinc-950/30 overflow-hidden">
+    <section id="why-cpflow" ref={containerRef} className="relative w-full border-t border-zinc-800/50 bg-zinc-950/30 overflow-hidden">
       <div className="py-24 px-6 md:px-12 max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-16">
         <div className="flex-1">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-950/30 border border-blue-900/30 text-xs font-medium text-blue-400 mb-6 uppercase tracking-widest">

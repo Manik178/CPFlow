@@ -22,7 +22,14 @@ async def get_codeforces_analytics(handle: str, current_user: CurrentUser = Depe
         try:
             # 1. Fetch user info
             info_res = await client.get(f"https://codeforces.com/api/user.info?handles={handle}")
-            info_data = info_res.json()
+            if info_res.status_code != 200:
+                raise HTTPException(status_code=502, detail="Codeforces API is currently unavailable or rate limiting.")
+            
+            try:
+                info_data = info_res.json()
+            except Exception:
+                raise HTTPException(status_code=502, detail="Codeforces returned invalid JSON.")
+                
             if info_data.get("status") != "OK":
                 raise HTTPException(status_code=400, detail="User not found")
             user_info = info_data["result"][0]
