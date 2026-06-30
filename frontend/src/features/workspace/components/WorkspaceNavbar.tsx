@@ -1,3 +1,5 @@
+"use client";
+
 import React from "react";
 import { ChevronLeft, Play, Send, Loader2, Lightbulb, LogOut, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
