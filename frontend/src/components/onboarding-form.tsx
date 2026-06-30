@@ -29,7 +29,7 @@ export function OnboardingForm({ user }: { user: User }) {
       return res.json()
     },
     onSuccess: () => {
-      router.push("/dashboard")
+      window.location.href = "/dashboard"
     },
   })
 
