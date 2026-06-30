@@ -110,13 +110,13 @@ export function HeroSection({ session }: { session?: any }) {
             {session?.user ? (
               <Link href="/workspace">
                 <Button size="lg" className="h-12 px-8 text-base bg-gradient-to-r from-blue-500 to-emerald-500 hover:from-blue-400 hover:to-emerald-400 text-white gap-2 rounded-full font-medium shadow-[0_0_30px_rgba(56,189,248,0.3)] border-0 transition-all">
-                  Enter Workspace <ArrowRight className="w-4 h-4" />
+                  Get Started <ArrowRight className="w-4 h-4" />
                 </Button>
               </Link>
             ) : (
               <Link href="/login">
                 <Button size="lg" className="h-12 px-8 text-base bg-gradient-to-r from-blue-500 to-emerald-500 hover:from-blue-400 hover:to-emerald-400 text-white gap-2 rounded-full font-medium shadow-[0_0_30px_rgba(56,189,248,0.3)] border-0 transition-all">
-                  Sign Up Free <ArrowRight className="w-4 h-4" />
+                  Get Started <ArrowRight className="w-4 h-4" />
                 </Button>
               </Link>
             )}
