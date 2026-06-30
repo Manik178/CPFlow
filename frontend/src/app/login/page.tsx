@@ -1,3 +1,4 @@
+import Link from "next/link"
 import { signIn } from "@/auth"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -9,11 +10,12 @@ export default function LoginPage() {
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-2 text-center">
           <div className="flex justify-center mb-4">
-            <div className="rounded-full bg-primary/10 p-3">
-              <Code2 className="h-8 w-8 text-primary" />
-            </div>
+            <Link href="/" className="flex items-center gap-2 font-outfit font-bold text-3xl hover:opacity-80 transition-opacity">
+              <Code2 className="w-8 h-8 text-emerald-400" />
+              <span>CPFlow</span>
+            </Link>
           </div>
-          <CardTitle className="text-2xl font-bold tracking-tight">Welcome to CPFlow</CardTitle>
+          <CardTitle className="text-2xl font-bold tracking-tight">Welcome back</CardTitle>
           <CardDescription>
             The Ultimate Competitive Programming Workspace. Sign in to sync your progress.
           </CardDescription>

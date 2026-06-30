@@ -16,10 +16,10 @@ export function ConnectHandleModal({ userId, platform, color }: { userId: string
 
   const mutation = useMutation({
     mutationFn: async (newHandle: string) => {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000"
+      const apiUrl = ""
       
       // First fetch current profile
-      const currentRes = await fetch(`${apiUrl}/api/users/${userId}/profile`)
+      const currentRes = await fetch(`${apiUrl}/api/users/profile`)
       if (!currentRes.ok) throw new Error("Failed to fetch profile")
       const currentProfile = await currentRes.json()
 
@@ -29,7 +29,7 @@ export function ConnectHandleModal({ userId, platform, color }: { userId: string
         [platformKey]: newHandle
       }
 
-      const res = await fetch(`${apiUrl}/api/users/${userId}/profile`, {
+      const res = await fetch(`${apiUrl}/api/users/profile`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

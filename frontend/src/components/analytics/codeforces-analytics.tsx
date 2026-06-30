@@ -12,8 +12,8 @@ export function CodeforcesAnalytics({ handle }: { handle: string }) {
   const { data, isLoading, isError } = useQuery({
     queryKey: ["cf_analytics", handle],
     queryFn: async () => {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000"
-      const res = await fetch(`${apiUrl}/analytics/codeforces/${handle}`)
+      const apiUrl = ""
+      const res = await fetch(`${apiUrl}/api/analytics/codeforces/${handle}`)
       if (!res.ok) throw new Error("Failed to fetch")
       return res.json()
     },

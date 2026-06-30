@@ -1,4 +1,5 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
+from auth.dependencies import RateLimiter, get_current_user, CurrentUser
 from pydantic import BaseModel
 import httpx
 import os
@@ -32,8 +33,8 @@ class CodeExecutionRequest(BaseModel):
     expected_output: str | None = None
 
 
-@router.post("/api/run")
-async def run_code(request: CodeExecutionRequest):
+@router.post("/api/run", dependencies=[Depends(RateLimiter(40, 60))])
+async def run_code(request: CodeExecutionRequest, current_user: CurrentUser = Depends(get_current_user)):
     """
     Executes code via the Piston execution engine.
     Piston runs everything inside isolated containers with no network access.
@@ -122,8 +123,11 @@ async def run_code(request: CodeExecutionRequest):
         status = STATUS_RTE
     else:
         if request.expected_output is not None:
-            # Compare output ignoring trailing whitespace
-            if stdout.strip() == request.expected_output.strip():
+            # Compare output ignoring trailing whitespace per line
+            def normalize(s: str) -> str:
+                return "\n".join(line.rstrip() for line in s.replace("\r", "").strip().split("\n"))
+                
+            if normalize(stdout) == normalize(request.expected_output):
                 status = STATUS_ACCEPTED
             else:
                 status = {"id": 4, "description": "Wrong Answer"}

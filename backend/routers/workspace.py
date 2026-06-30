@@ -7,18 +7,17 @@ from datetime import datetime, timezone
 from database import get_db
 from cache import get_cache
 from models import WorkspaceDraft, WorkspaceLayout
+from auth.dependencies import get_current_user, CurrentUser, RateLimiter
 
 router = APIRouter(prefix="/api/workspace", tags=["Workspace Sync"])
 
-@router.post("/sync")
-async def sync_workspace(data: Dict[str, Any], db: AsyncSession = Depends(get_db)):
+@router.post("/sync", dependencies=[Depends(RateLimiter(120, 60))])
+async def sync_workspace(data: Dict[str, Any], current_user: CurrentUser = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     """
     Synchronizes drafts and layouts from IndexedDB to PostgreSQL.
     Resolves conflicts using updatedAt timestamps.
     """
-    user_id = data.get("userId")
-    if not user_id:
-        raise HTTPException(status_code=401, detail="Unauthorized")
+    user_id = current_user.id
 
     drafts = data.get("drafts", [])
     layouts = data.get("layouts", [])
@@ -86,14 +85,14 @@ async def sync_workspace(data: Dict[str, Any], db: AsyncSession = Depends(get_db
     await db.commit()
     return {"status": "success"}
 
-@router.get("/recent/{user_id}")
-async def get_recent_workspaces(user_id: str, limit: int = 10, db: AsyncSession = Depends(get_db)):
+@router.get("/recent")
+async def get_recent_workspaces(limit: int = 50, current_user: CurrentUser = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     """
     Returns recent workspaces based on drafts to populate 'Continue Solving' in the dashboard.
     """
     stmt = (
         select(WorkspaceDraft.platform, WorkspaceDraft.problem_id, WorkspaceDraft.updated_at, WorkspaceDraft.language)
-        .where(WorkspaceDraft.user_id == user_id)
+        .where(WorkspaceDraft.user_id == current_user.id)
         .order_by(WorkspaceDraft.updated_at.desc())
         .limit(limit)
     )
@@ -102,7 +101,13 @@ async def get_recent_workspaces(user_id: str, limit: int = 10, db: AsyncSession 
     
     try:
         workspaces = []
+        seen = set()
         for row in results:
+            key = f"{row.platform}-{row.problem_id}"
+            if key in seen:
+                continue
+            seen.add(key)
+            
             title = row.problem_id
             try:
                 problem_data = await get_cache(f"problem_data:{row.problem_id}")
@@ -126,12 +131,12 @@ async def get_recent_workspaces(user_id: str, limit: int = 10, db: AsyncSession 
 async def get_workspace_state(
     platform: str, 
     problem_id: str, 
-    userId: str, 
+    current_user: CurrentUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     try:
         draft_stmt = select(WorkspaceDraft).where(
-            WorkspaceDraft.user_id == userId,
+            WorkspaceDraft.user_id == current_user.id,
             WorkspaceDraft.platform == platform,
             WorkspaceDraft.problem_id == problem_id
         )
@@ -139,7 +144,7 @@ async def get_workspace_state(
         draft = draft_result.scalars().first()
         
         layout_stmt = select(WorkspaceLayout).where(
-            WorkspaceLayout.user_id == userId,
+            WorkspaceLayout.user_id == current_user.id,
             WorkspaceLayout.platform == platform,
             WorkspaceLayout.problem_id == problem_id
         )

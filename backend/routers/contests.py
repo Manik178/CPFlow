@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException
 import httpx
 from datetime import datetime, timedelta
 
-router = APIRouter(prefix="/contests", tags=["contests"])
+router = APIRouter(prefix="/api/contests", tags=["contests"])
 
 # Cache upcoming contests
 _contests_cache = {"data": None, "timestamp": datetime.min}

@@ -58,7 +58,7 @@ export function ExplainPopover({ pid }: ExplainPopoverProps) {
     setIsExplaining(true);
     setExplanation(null);
     try {
-      const res = await fetch(`http://localhost:8000/api/problems/${pid}/explain`, {
+      const res = await fetch(`/api/problems/${pid}/explain`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ highlighted_text: selection })

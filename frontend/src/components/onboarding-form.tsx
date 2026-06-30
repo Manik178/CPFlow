@@ -19,7 +19,7 @@ export function OnboardingForm({ user }: { user: User }) {
 
   const onboardMutation = useMutation({
     mutationFn: async (data: any) => {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000"
+      const apiUrl = ""
       const res = await fetch(`${apiUrl}/api/users/onboard`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -36,8 +36,6 @@ export function OnboardingForm({ user }: { user: User }) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     onboardMutation.mutate({
-      id: user.id,
-      email: user.email,
       name: user.name,
       image: user.image,
       handles: {

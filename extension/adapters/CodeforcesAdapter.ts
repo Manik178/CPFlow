@@ -182,10 +182,11 @@ export class CodeforcesAdapter implements JudgeAdapter {
   async getVerdict(submissionId: string, problemUrl: string): Promise<VerdictDetails> {
     let data: any = {};
     try {
+      const csrfToken = document.querySelector('meta[name="X-Csrf-Token"]')?.getAttribute('content') || "";
       const res = await fetch("https://codeforces.com/data/submitSource", {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: `submissionId=${submissionId}`
+        body: `submissionId=${submissionId}&csrf_token=${csrfToken}`
       });
       data = await res.json();
     } catch (e) {

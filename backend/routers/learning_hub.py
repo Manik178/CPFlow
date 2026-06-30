@@ -9,15 +9,24 @@ import json
 # But for now, we'll try to import _problem_cache from main.
 from cache import _problem_cache, get_cache, set_cache
 from agents.learning_hub_graph import learning_hub_graph, explain_simply
+from auth.dependencies import RateLimiter, get_current_user, CurrentUser
 
 router = APIRouter(prefix="/api/problems", tags=["Learning Hub"])
 
 class ExplainRequest(BaseModel):
     highlighted_text: str
 
-@router.get("/{problem_id}/learning-hub")
-async def get_learning_hub(problem_id: str):
+@router.get("/{problem_id}/learning-hub", dependencies=[Depends(RateLimiter(15, 60))])
+async def get_learning_hub(problem_id: str, current_user: CurrentUser = Depends(get_current_user)):
     problem = _problem_cache.get(problem_id)
+    if not problem:
+        try:
+            problem = await get_cache(f"problem_data:{problem_id}")
+            if problem:
+                _problem_cache[problem_id] = problem
+        except Exception:
+            pass
+            
     if not problem:
         raise HTTPException(status_code=404, detail="Problem not found in cache. Please open it via the extension again.")
 
@@ -63,9 +72,17 @@ async def get_learning_hub(problem_id: str):
 
     return StreamingResponse(event_generator(), media_type="text/event-stream")
 
-@router.post("/{problem_id}/explain")
-async def explain_text(problem_id: str, req: ExplainRequest):
+@router.post("/{problem_id}/explain", dependencies=[Depends(RateLimiter(15, 60))])
+async def explain_text(problem_id: str, req: ExplainRequest, current_user: CurrentUser = Depends(get_current_user)):
     problem = _problem_cache.get(problem_id)
+    if not problem:
+        try:
+            problem = await get_cache(f"problem_data:{problem_id}")
+            if problem:
+                _problem_cache[problem_id] = problem
+        except Exception:
+            pass
+            
     if not problem:
         raise HTTPException(status_code=404, detail="Problem not found.")
 

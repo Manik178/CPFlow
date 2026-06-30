@@ -33,7 +33,7 @@ export default function LearningHubPage() {
         setLoading(true);
         setError(null);
         
-        const res = await fetch(`http://localhost:8000/api/problems/${pid}/learning-hub`);
+        const res = await fetch(`/api/problems/${pid}/learning-hub`);
         if (!res.ok) {
           throw new Error(await res.text());
         }

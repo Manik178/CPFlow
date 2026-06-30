@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { judgeService } from "../services/judge.service";
 import { extensionService } from "../services/extension.service";
 import type { TestCase, TestResult, ProblemData } from "@/shared/types/workspace";
@@ -8,9 +8,16 @@ export function useJudge() {
   const [isRunning, setIsRunning] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [pistonOnline, setPistonOnline] = useState<boolean | null>(null);
+  const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     judgeService.checkHealth().then(setPistonOnline);
+    
+    return () => {
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current);
+      }
+    };
   }, []);
 
   const handleRunCode = useCallback(
@@ -60,13 +67,15 @@ export function useJudge() {
         setSubmissionVerdict({ status: "Submitted. Polling verdict..." });
 
         // Poll for verdict
-        const pollId = setInterval(async () => {
+        if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+        
+        pollIntervalRef.current = setInterval(async () => {
           try {
             const verdict = await extensionService.getVerdict(res.submissionId!, problem.url);
             setSubmissionVerdict(verdict);
             
             if (verdict.status !== "Queued" && verdict.status !== "Running" && verdict.status !== "Unknown" && verdict.status !== "Submitted. Polling verdict...") {
-              clearInterval(pollId);
+              if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
             }
           } catch (e) {
             console.error("Polling error", e);

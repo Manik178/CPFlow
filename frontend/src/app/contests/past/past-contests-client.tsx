@@ -11,8 +11,8 @@ export function PastContestsClient() {
   const { data: contests, isLoading, isError } = useQuery({
     queryKey: ["past_contests"],
     queryFn: async () => {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000"
-      const res = await fetch(`${apiUrl}/contests/past`)
+      const apiUrl = ""
+      const res = await fetch(`${apiUrl}/api/contests/past`)
       if (!res.ok) throw new Error("Failed to fetch")
       return res.json()
     }

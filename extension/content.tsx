@@ -15,7 +15,7 @@ export const config: PlasmoCSConfig = {
 }
 
 const CPFLOW_URL = "http://localhost:3000"
-const API_URL = "http://localhost:8000"
+const API_URL = "http://localhost:3000"
 
 const cfAdapter = new CodeforcesAdapter();
 const csesAdapter = new CsesAdapter();

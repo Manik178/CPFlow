@@ -8,8 +8,8 @@ export function CodeChefAnalytics({ handle }: { handle: string }) {
   const { data, isLoading, isError } = useQuery({
     queryKey: ["cc_analytics", handle],
     queryFn: async () => {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000"
-      const res = await fetch(`${apiUrl}/analytics/codechef/${handle}`)
+      const apiUrl = ""
+      const res = await fetch(`${apiUrl}/api/analytics/codechef/${handle}`)
       if (!res.ok) throw new Error("Failed to fetch")
       return res.json()
     },

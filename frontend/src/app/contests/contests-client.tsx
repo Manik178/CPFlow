@@ -2,16 +2,18 @@
 
 import { useQuery } from "@tanstack/react-query"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Calendar, Clock, ExternalLink } from "lucide-react"
+import { Calendar, Clock, ExternalLink, ArrowLeft } from "lucide-react"
 import { format, formatDistanceToNow } from "date-fns"
 import { Skeleton } from "@/components/ui/skeleton"
+import Link from "next/link"
+import { Button } from "@/components/ui/button"
 
 export function ContestsClient() {
   const { data: contests, isLoading, isError } = useQuery({
     queryKey: ["upcoming_contests"],
     queryFn: async () => {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000"
-      const res = await fetch(`${apiUrl}/contests/`)
+      const apiUrl = ""
+      const res = await fetch(`${apiUrl}/api/contests/`)
       if (!res.ok) throw new Error("Failed to fetch")
       return res.json()
     },
@@ -21,6 +23,12 @@ export function ContestsClient() {
   return (
     <div className="p-8 max-w-5xl mx-auto space-y-8 mt-10">
       <div>
+        <Link href="/dashboard">
+          <Button variant="ghost" className="mb-4 pl-0 text-muted-foreground hover:text-white group">
+            <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" />
+            Back to Dashboard
+          </Button>
+        </Link>
         <h1 className="text-4xl font-outfit font-bold tracking-tight">Contest Tracker</h1>
         <p className="mt-2 text-lg text-muted-foreground">Upcoming competitive programming contests</p>
       </div>

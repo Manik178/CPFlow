@@ -1,6 +1,6 @@
 import { getDB } from '../db/indexeddb';
 
-export async function syncToPostgreSQL(userId: string) {
+export async function syncToPostgreSQL() {
   if (typeof window === 'undefined') return;
   
   const db = await getDB();
@@ -13,12 +13,13 @@ export async function syncToPostgreSQL(userId: string) {
 
   if (drafts.length === 0 && layouts.length === 0) return;
 
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+  const apiUrl = "";
   
   const res = await fetch(`${apiUrl}/api/workspace/sync`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ userId, drafts, layouts })
+    body: JSON.stringify({ drafts, layouts }),
+    keepalive: true
   });
 
   if (!res.ok) {

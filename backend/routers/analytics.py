@@ -1,16 +1,17 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
+from auth.dependencies import get_current_user, CurrentUser
 import httpx
 from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
 
-router = APIRouter(prefix="/analytics", tags=["analytics"])
+router = APIRouter(prefix="/api/analytics", tags=["analytics"])
 
 # Simple in-memory cache to prevent Codeforces API rate-limiting
 _analytics_cache = {}
 CACHE_TTL = timedelta(hours=1)
 
 @router.get("/codeforces/{handle}")
-async def get_codeforces_analytics(handle: str):
+async def get_codeforces_analytics(handle: str, current_user: CurrentUser = Depends(get_current_user)):
     now = datetime.now()
     if handle in _analytics_cache and "codeforces" in _analytics_cache[handle]:
         cached_data, timestamp = _analytics_cache[handle]["codeforces"]
@@ -90,7 +91,7 @@ async def get_codeforces_analytics(handle: str):
 
 
 @router.get("/leetcode/{handle}")
-async def get_leetcode_analytics(handle: str):
+async def get_leetcode_analytics(handle: str, current_user: CurrentUser = Depends(get_current_user)):
     now = datetime.now()
     if handle in _analytics_cache and "leetcode" in _analytics_cache[handle]:
         cached_data, timestamp = _analytics_cache[handle]["leetcode"]
@@ -179,7 +180,7 @@ async def get_leetcode_analytics(handle: str):
             raise HTTPException(status_code=500, detail="Failed to fetch analytics from LeetCode")
 
 @router.get("/codechef/{handle}")
-async def get_codechef_analytics(handle: str):
+async def get_codechef_analytics(handle: str, current_user: CurrentUser = Depends(get_current_user)):
     now = datetime.now()
     if handle in _analytics_cache and "codechef" in _analytics_cache[handle]:
         cached_data, timestamp = _analytics_cache[handle]["codechef"]

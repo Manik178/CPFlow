@@ -18,7 +18,7 @@ export function useWorkspaceSync(userId: string | undefined) {
       
       try {
         setSyncState('Saving...');
-        await syncToPostgreSQL(userId);
+        await syncToPostgreSQL();
         setSyncState('Synced');
       } catch (err) {
         console.error('[Sync] failed:', err);

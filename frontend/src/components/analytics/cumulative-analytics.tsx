@@ -10,7 +10,7 @@ export function CumulativeAnalytics({ profile }: { profile: any }) {
     queryKey: ["cf_analytics", profile?.handles?.codeforces],
     queryFn: async () => {
       if (!profile?.handles?.codeforces) return null
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000"}/analytics/codeforces/${profile.handles.codeforces}`)
+      const res = await fetch(`${""}/api/analytics/codeforces/${profile.handles.codeforces}`)
       return res.json()
     },
     enabled: !!profile?.handles?.codeforces
@@ -20,7 +20,7 @@ export function CumulativeAnalytics({ profile }: { profile: any }) {
     queryKey: ["lc_analytics", profile?.handles?.leetcode],
     queryFn: async () => {
       if (!profile?.handles?.leetcode) return null
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000"}/analytics/leetcode/${profile.handles.leetcode}`)
+      const res = await fetch(`${""}/api/analytics/leetcode/${profile.handles.leetcode}`)
       return res.json()
     },
     enabled: !!profile?.handles?.leetcode
@@ -30,7 +30,7 @@ export function CumulativeAnalytics({ profile }: { profile: any }) {
     queryKey: ["cc_analytics", profile?.handles?.codechef],
     queryFn: async () => {
       if (!profile?.handles?.codechef) return null
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000"}/analytics/codechef/${profile.handles.codechef}`)
+      const res = await fetch(`${""}/api/analytics/codechef/${profile.handles.codechef}`)
       return res.json()
     },
     enabled: !!profile?.handles?.codechef

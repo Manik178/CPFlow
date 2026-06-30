@@ -43,8 +43,8 @@ export function useWorkspaceRecovery({
         // Fetch remote state if user is logged in
         if (userId) {
           try {
-            const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-            const res = await fetch(`${API_URL}/api/workspace/state/${platform}/${problemId}?userId=${userId}`);
+            const API_URL = "";
+            const res = await fetch(`/api/workspace/state/${platform}/${problemId}`);
             if (res.ok) {
               const remote = await res.json();
               if (remote.layout) {
