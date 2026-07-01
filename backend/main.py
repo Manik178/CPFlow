@@ -1,6 +1,7 @@
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from sqlalchemy import text
 import httpx
 import os
 from dotenv import load_dotenv
@@ -54,10 +55,61 @@ class ProblemImportRequest(BaseModel):
     samples: list[dict] = []
 
 from auth.dependencies import RateLimiter
+import time
+
+_start_time = time.time()
 
 @app.get("/")
 def read_root():
     return {"status": "ok", "message": "Welcome to CPFlow API"}
+
+@app.get("/api/health")
+async def health_check():
+    """
+    Health check endpoint that verifies database and Redis connectivity.
+    Used by uptime monitors and deployment health checks.
+    """
+    health = {
+        "status": "healthy",
+        "uptime_seconds": round(time.time() - _start_time, 1),
+        "services": {}
+    }
+
+    # Check PostgreSQL
+    try:
+        async with engine.connect() as conn:
+            await conn.execute(text("SELECT 1"))
+        health["services"]["database"] = "connected"
+    except Exception as e:
+        health["services"]["database"] = f"error: {str(e)}"
+        health["status"] = "degraded"
+
+    # Check Redis
+    try:
+        from redis_client import redis_client
+        await redis_client.ping()
+        health["services"]["redis"] = "connected"
+    except Exception as e:
+        health["services"]["redis"] = f"error: {str(e)}"
+        health["status"] = "degraded"
+
+    # Check Piston
+    try:
+        piston_url = os.getenv("PISTON_URL", "http://localhost:2000")
+        async with httpx.AsyncClient(timeout=3.0) as client:
+            resp = await client.get(f"{piston_url}/api/v2/runtimes")
+            if resp.status_code == 200:
+                health["services"]["piston"] = "connected"
+            else:
+                health["services"]["piston"] = f"error: status {resp.status_code}"
+                health["status"] = "degraded"
+    except Exception as e:
+        health["services"]["piston"] = f"error: {str(e)}"
+        health["status"] = "degraded"
+
+    status_code = 200 if health["status"] == "healthy" else 503
+    from fastapi.responses import JSONResponse
+    return JSONResponse(content=health, status_code=status_code)
 
 @app.post("/api/problems/import", dependencies=[Depends(RateLimiter(requests=10, window=60))])
 async def import_problem(problem: ProblemImportRequest):
