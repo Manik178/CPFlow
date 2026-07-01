@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, useScroll, useTransform, useSpring } from "framer-motion";
-import { Download, Puzzle, Server, Terminal, Rocket } from "lucide-react";
+import { Download, Puzzle, User, Pin, Rocket } from "lucide-react";
 import { useRef } from "react";
 
 export function SetupSection() {
@@ -14,11 +14,11 @@ export function SetupSection() {
   const lineHeight = useSpring(useTransform(scrollYProgress, [0, 1], ["0%", "100%"]), { stiffness: 50, damping: 20 });
 
   const steps = [
-    { num: 1, title: "Download Extension", desc: "Download the cpflow-extension.zip from our public directory and extract it.", icon: <Download className="w-5 h-5 text-zinc-900" />, color: "bg-emerald-400" },
-    { num: 2, title: "Load in Chrome", desc: "Go to chrome://extensions, enable Developer Mode, and click 'Load unpacked'. Select the extracted folder.", icon: <Puzzle className="w-5 h-5 text-zinc-900" />, color: "bg-blue-400" },
-    { num: 3, title: "Deploy Backend", desc: "Host the FastAPI backend on Render or Railway, connected to a PostgreSQL database.", icon: <Server className="w-5 h-5 text-zinc-900" />, color: "bg-indigo-400" },
-    { num: 4, title: "Start Execution Node", desc: "Run the Piston code execution engine via Docker on an AWS EC2 instance.", icon: <Terminal className="w-5 h-5 text-zinc-900" />, color: "bg-purple-400" },
-    { num: 5, title: "Ready to Code", desc: "Visit any supported platform, authenticate, and you're good to go!", icon: <Rocket className="w-5 h-5 text-zinc-900" />, color: "bg-teal-400" }
+    { num: 1, title: "Create an Account", desc: "Sign in with GitHub to access your personalized CPFlow dashboard.", icon: <User className="w-5 h-5 text-zinc-900" />, color: "bg-emerald-400" },
+    { num: 2, title: "Download Extension", desc: "Download the cpflow-extension.zip from our platform and extract it to a folder.", icon: <Download className="w-5 h-5 text-zinc-900" />, color: "bg-blue-400" },
+    { num: 3, title: "Install in Chrome", desc: "Go to chrome://extensions, enable Developer Mode, and click 'Load unpacked' to select the folder.", icon: <Puzzle className="w-5 h-5 text-zinc-900" />, color: "bg-indigo-400" },
+    { num: 4, title: "Pin for Access", desc: "Pin the CPFlow extension to your browser toolbar for quick one-click access.", icon: <Pin className="w-5 h-5 text-zinc-900" />, color: "bg-purple-400" },
+    { num: 5, title: "Start Coding", desc: "Visit any supported platform, click the extension, and watch your problems sync instantly!", icon: <Rocket className="w-5 h-5 text-zinc-900" />, color: "bg-teal-400" }
   ];
 
   return (
@@ -28,7 +28,7 @@ export function SetupSection() {
         <h2 className="text-3xl md:text-4xl font-outfit font-bold tracking-tight text-white mb-4">
           How to Setup
         </h2>
-        <p className="text-zinc-400">Deploy your own self-hosted competitive programming environment in 5 simple steps.</p>
+        <p className="text-zinc-400">Get your competitive programming environment up and running in 5 simple steps.</p>
       </div>
 
       <div className="relative">
