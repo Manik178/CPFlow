@@ -11,10 +11,10 @@ from .prompts import (
     RESOURCES_SYSTEM_PROMPT, VALIDATOR_SYSTEM_PROMPT, EXPLAIN_SIMPLY_SYSTEM_PROMPT
 )
 
-# We will use llama-3.3-70b-versatile for complex reasoning (Editorial, Alternatives)
+# We will use openai/gpt-oss-120b for complex reasoning (Editorial, Alternatives)
 # and smaller models for simpler tasks to avoid Groq's 12,000 TPM limit on the free tier.
 def get_large_llm():
-    return ChatGroq(model_name="llama-3.3-70b-versatile", temperature=0.2)
+    return ChatGroq(model_name="openai/gpt-oss-120b", temperature=0.2)
 
 def get_fast_llm():
     return ChatGroq(model_name="llama-3.1-8b-instant", temperature=0.2)
