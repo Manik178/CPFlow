@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Code2, Sparkles, CheckCircle2 } from "lucide-react";
-import { CodeforcesIcon, CodeChefIcon, CsesIcon, ChromeIcon } from "@/components/icons/PlatformIcons";
+import { ArrowRight, Code2, Sparkles, CheckCircle2, Puzzle } from "lucide-react";
+import { CodeforcesIcon, CodeChefIcon, CsesIcon } from "@/components/icons/PlatformIcons";
 import { motion, useMotionValue, useMotionTemplate } from "framer-motion";
 import { HeroMockup } from "./HeroMockup";
 
@@ -123,7 +123,7 @@ export function HeroSection({ session }: { session?: any }) {
             <a href="/cpflow-extension.zip" download="cpflow-extension.zip">
               <Button size="lg" variant="outline" className="h-12 px-8 text-base rounded-full font-medium border-zinc-700 bg-zinc-900/50 hover:bg-zinc-800 text-zinc-300 gap-2">
                 Install Extension
-                <ChromeIcon className="w-5 h-5" />
+                <Puzzle className="w-5 h-5" />
               </Button>
             </a>
           </motion.div>
