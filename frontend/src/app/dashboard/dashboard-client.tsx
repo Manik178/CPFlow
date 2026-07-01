@@ -37,7 +37,23 @@ export function DashboardClient({ user }: { user: User }) {
       const apiUrl = ""
       const res = await fetch(`${apiUrl}/api/workspace/recent?limit=50`)
       if (!res.ok) throw new Error("Failed to fetch recent workspaces")
-      return res.json()
+      const data = await res.json()
+      
+      try {
+        const { getMetadata } = await import("@/features/workspace/db/indexeddb")
+        for (const ws of data.workspaces) {
+          if (!ws.title || ws.title === ws.problemId) {
+            const localMeta = await getMetadata(ws.platform, ws.problemId)
+            if (localMeta && localMeta.title) {
+              ws.title = localMeta.title
+            }
+          }
+        }
+      } catch (e) {
+        console.error("Failed to enrich workspace titles from local DB", e)
+      }
+      
+      return data
     }
   })
 

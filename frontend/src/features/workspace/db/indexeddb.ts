@@ -149,6 +149,12 @@ export async function saveMetadata(platform: string, problemId: string, title: s
   });
 }
 
+export async function getMetadata(platform: string, problemId: string) {
+  const db = await getDB();
+  if (!db) return null;
+  return db.get('metadata', `${platform}-${problemId}`);
+}
+
 export async function getRecentWorkspaces(limit = 10) {
   const db = await getDB();
   if (!db) return [];
