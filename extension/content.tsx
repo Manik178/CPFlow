@@ -14,8 +14,8 @@ export const config: PlasmoCSConfig = {
   ]
 }
 
-const CPFLOW_URL = "http://localhost:3000"
-const API_URL = "http://localhost:3000"
+const CPFLOW_URL = "https://cp-flow-frontend.vercel.app"
+const API_URL = "https://cp-flow-frontend.vercel.app"
 
 const cfAdapter = new CodeforcesAdapter();
 const csesAdapter = new CsesAdapter();

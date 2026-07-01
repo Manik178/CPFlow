@@ -1,7 +1,7 @@
 import type { PlasmoCSConfig } from "plasmo"
 
 export const config: PlasmoCSConfig = {
-  matches: ["http://localhost:3000/*"]
+  matches: ["https://cp-flow-frontend.vercel.app/*"]
 }
 
 // Guard: check if extension context is still valid before messaging

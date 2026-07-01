@@ -2,7 +2,7 @@ import type { PlasmoCSConfig } from "plasmo"
 
 export const config: PlasmoCSConfig = {
   matches: [
-    "http://localhost:3000/*",
+    "https://cp-flow-frontend.vercel.app/*",
     "https://cpflow.yourdomain.com/*" // Add production URL if available later
   ]
 }

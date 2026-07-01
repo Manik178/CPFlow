@@ -61,7 +61,7 @@ export const NotificationManager = {
 
 // Handle clicking on a notification to focus CPFlow tab
 chrome.notifications.onClicked.addListener((notificationId) => {
-  chrome.tabs.query({ url: "*://localhost:3000/*" }, (tabs) => {
+  chrome.tabs.query({ url: "*://cp-flow-frontend.vercel.app/*" }, (tabs) => {
     if (tabs.length > 0) {
       chrome.tabs.update(tabs[0].id!, { active: true });
       chrome.windows.update(tabs[0].windowId, { focused: true });
