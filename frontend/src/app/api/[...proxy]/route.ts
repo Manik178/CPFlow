@@ -65,6 +65,12 @@ async function handleRequest(request: NextRequest, context: { params: Promise<{ 
     const responseHeaders = new Headers(response.headers);
     responseHeaders.set("access-control-allow-origin", "*");
     
+    // Node.js fetch automatically decompresses the response body, 
+    // but keeps the original content-encoding header. We must remove it
+    // so the browser doesn't try to decompress an already uncompressed body.
+    responseHeaders.delete("content-encoding");
+    responseHeaders.delete("content-length");
+    
     // Create new response
     return new NextResponse(response.body, {
       status: response.status,
