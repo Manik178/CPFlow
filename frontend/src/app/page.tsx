@@ -5,6 +5,7 @@ import { MetricsSection } from "@/components/landing/MetricsSection";
 import { FeaturesSection } from "@/components/landing/FeaturesSection";
 import { JourneySection } from "@/components/landing/JourneySection";
 import { EdgeSection } from "@/components/landing/EdgeSection";
+import { SetupSection } from "@/components/landing/SetupSection";
 import { FAQSection } from "@/components/landing/FAQSection";
 import { FooterSection } from "@/components/landing/FooterSection";
 import { BackgroundEffects } from "@/components/landing/BackgroundEffects";
@@ -22,6 +23,7 @@ export default async function Home() {
         <MetricsSection />
         <FeaturesSection />
         <JourneySection />
+        <SetupSection />
         <EdgeSection />
         <FAQSection />
       </main>
