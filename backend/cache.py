@@ -25,10 +25,16 @@ redis_client = redis.from_url(
 _problem_cache: dict[str, dict] = {}
 
 async def get_cache(key: str) -> dict | None:
-    data = await redis_client.get(key)
-    if data:
-        return json.loads(data)
+    try:
+        data = await redis_client.get(key)
+        if data:
+            return json.loads(data)
+    except Exception as e:
+        print(f"Redis get_cache error: {e}")
     return None
 
 async def set_cache(key: str, data: dict, ex: int = 3600):
-    await redis_client.set(key, json.dumps(data), ex=ex)
+    try:
+        await redis_client.set(key, json.dumps(data), ex=ex)
+    except Exception as e:
+        print(f"Redis set_cache error: {e}")
