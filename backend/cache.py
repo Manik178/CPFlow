@@ -5,12 +5,20 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+from redis.backoff import ExponentialBackoff
+from redis.retry import Retry
+from redis.exceptions import ConnectionError, TimeoutError
+
 REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379")
+retry_strategy = Retry(ExponentialBackoff(cap=2, base=0.1), 3)
+
 redis_client = redis.from_url(
     REDIS_URL, 
     decode_responses=True,
     health_check_interval=30,
-    retry_on_timeout=True
+    retry_on_timeout=True,
+    retry=retry_strategy,
+    retry_on_error=[ConnectionError, TimeoutError, ConnectionError]
 )
 
 # Legacy fallback for local dev
