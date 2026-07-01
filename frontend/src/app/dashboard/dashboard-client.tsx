@@ -132,57 +132,63 @@ export function DashboardClient({ user }: { user: User }) {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {isLoading ? (
-          <>
-            <Skeleton className="h-[120px] w-full" />
-            <Skeleton className="h-[120px] w-full" />
-            <Skeleton className="h-[120px] w-full" />
-            <Skeleton className="h-[120px] w-full" />
-          </>
-        ) : isError ? (
-          <p className="text-sm text-destructive">Failed to load handles. Is the backend running?</p>
-        ) : (
-          <>
-            <HandleCard 
-              userId={user.id!} 
-              platform="Codeforces" 
-              handle={profile?.handles?.codeforces} 
-              color="text-blue-500" 
-              analytics={<CodeforcesAnalytics handle={profile?.handles?.codeforces as string} />}
-            />
-            <HandleCard 
-              userId={user.id!} 
-              platform="CodeChef" 
-              handle={profile?.handles?.codechef} 
-              color="text-orange-500" 
-              analytics={<CodeChefAnalytics handle={profile?.handles?.codechef as string} />}
-            />
-            <HandleCard 
-              userId={user.id!} 
-              platform="CSES" 
-              handle={profile?.handles?.cses} 
-              color="text-emerald-500" 
-            />
-            <HandleCard 
-              userId={user.id!} 
-              platform="LeetCode" 
-              handle={profile?.handles?.leetcode} 
-              color="text-yellow-500" 
-              analytics={<LeetCodeAnalytics handle={profile?.handles?.leetcode as string} />}
-            />
-          </>
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.2fr] gap-6">
+        {/* Left column: Handle cards in 2x2 grid */}
+        <div className="grid grid-cols-2 gap-3">
+          {isLoading ? (
+            <>
+              <Skeleton className="h-[100px] w-full" />
+              <Skeleton className="h-[100px] w-full" />
+              <Skeleton className="h-[100px] w-full" />
+              <Skeleton className="h-[100px] w-full" />
+            </>
+          ) : isError ? (
+            <p className="text-sm text-destructive col-span-2">Failed to load handles. Is the backend running?</p>
+          ) : (
+            <>
+              <HandleCard 
+                userId={user.id!} 
+                platform="Codeforces" 
+                handle={profile?.handles?.codeforces} 
+                color="text-blue-500" 
+                analytics={<CodeforcesAnalytics handle={profile?.handles?.codeforces as string} />}
+              />
+              <HandleCard 
+                userId={user.id!} 
+                platform="CodeChef" 
+                handle={profile?.handles?.codechef} 
+                color="text-orange-500" 
+                analytics={<CodeChefAnalytics handle={profile?.handles?.codechef as string} />}
+              />
+              <HandleCard 
+                userId={user.id!} 
+                platform="CSES" 
+                handle={profile?.handles?.cses} 
+                color="text-emerald-500" 
+              />
+              <HandleCard 
+                userId={user.id!} 
+                platform="LeetCode" 
+                handle={profile?.handles?.leetcode} 
+                color="text-yellow-500" 
+                analytics={<LeetCodeAnalytics handle={profile?.handles?.leetcode as string} />}
+              />
+            </>
+          )}
+        </div>
+
+        {/* Right column: Cumulative progress */}
+        {profile && (
+          <CumulativeAnalytics profile={profile} />
         )}
       </div>
 
-      <div className="pt-8 space-y-12">
-        {profile && (
-          <div className="space-y-6">
-            <CumulativeAnalytics profile={profile} />
-            <CumulativeHeatmap profile={profile} />
-          </div>
-        )}
-      </div>
+      {/* Full-width heatmap below */}
+      {profile && (
+        <div className="pt-4">
+          <CumulativeHeatmap profile={profile} />
+        </div>
+      )}
     </div>
   )
 }
