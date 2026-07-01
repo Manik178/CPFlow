@@ -10,6 +10,7 @@ import { Loader2, Plus } from "lucide-react"
 export function ConnectHandleModal({ userId, platform, color }: { userId: string, platform: string, color: string }) {
   const [open, setOpen] = useState(false)
   const [handle, setHandle] = useState("")
+  const [errorMsg, setErrorMsg] = useState("")
   const queryClient = useQueryClient()
 
   const platformKey = platform.toLowerCase()
@@ -38,13 +39,20 @@ export function ConnectHandleModal({ userId, platform, color }: { userId: string
         })
       })
 
-      if (!res.ok) throw new Error("Failed to update handle")
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}))
+        throw new Error(errData.detail || "Failed to update handle")
+      }
       return res.json()
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["userProfile", userId] })
       setOpen(false)
       setHandle("")
+      setErrorMsg("")
+    },
+    onError: (error) => {
+      setErrorMsg(error.message)
     }
   })
 
@@ -69,6 +77,11 @@ export function ConnectHandleModal({ userId, platform, color }: { userId: string
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleConnect} className="grid gap-4 py-4">
+          {errorMsg && (
+            <div className="p-3 text-sm text-red-500 bg-red-500/10 border border-red-500/20 rounded-md">
+              {errorMsg}
+            </div>
+          )}
           <div className="grid grid-cols-4 items-center gap-4">
             <Input
               id="handle"

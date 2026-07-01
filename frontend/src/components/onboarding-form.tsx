@@ -16,6 +16,7 @@ export function OnboardingForm({ user }: { user: User }) {
     cses: "",
     leetcode: "",
   })
+  const [errorMsg, setErrorMsg] = useState("")
 
   const onboardMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -25,14 +26,17 @@ export function OnboardingForm({ user }: { user: User }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       })
-      if (!res.ok) throw new Error("Failed to onboard")
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}))
+        throw new Error(errData.detail || "Failed to onboard")
+      }
       return res.json()
     },
     onSuccess: () => {
       window.location.href = "/dashboard"
     },
     onError: (error) => {
-      alert("Error saving profile: " + error.message + ". Check Vercel logs or network tab.")
+      setErrorMsg(error.message)
     }
   })
 
@@ -60,6 +64,11 @@ export function OnboardingForm({ user }: { user: User }) {
       </CardHeader>
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
+          {errorMsg && (
+            <div className="p-3 text-sm text-red-500 bg-red-500/10 border border-red-500/20 rounded-md">
+              {errorMsg}
+            </div>
+          )}
           <div className="space-y-2">
             <label htmlFor="codeforces" className="text-sm font-medium leading-none">Codeforces Handle</label>
             <Input

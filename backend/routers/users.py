@@ -6,6 +6,7 @@ from typing import Dict, Any
 from database import get_db
 from models import User, LinkedHandles, Preferences
 from auth.dependencies import get_current_user, CurrentUser
+from utils.validators import validate_handles
 
 router = APIRouter(prefix="/api/users", tags=["Users"])
 
@@ -40,6 +41,11 @@ async def onboard_user(data: Dict[str, Any], current_user: CurrentUser = Depends
     # Update handles if provided
     handles_data = data.get("handles", {})
     if handles_data:
+        invalid_platforms = await validate_handles(handles_data)
+        if invalid_platforms:
+            platforms_str = ", ".join(invalid_platforms)
+            raise HTTPException(status_code=400, detail=f"Invalid account, try again: {platforms_str}")
+            
         result = await db.execute(select(LinkedHandles).where(LinkedHandles.user_id == user_id))
         handles = result.scalars().first()
         if handles:
@@ -90,6 +96,12 @@ async def update_profile(data: Dict[str, Any], current_user: CurrentUser = Depen
         db.add(handles)
         
     handles_data = data.get("handles", {})
+    if handles_data:
+        invalid_platforms = await validate_handles(handles_data)
+        if invalid_platforms:
+            platforms_str = ", ".join(invalid_platforms)
+            raise HTTPException(status_code=400, detail=f"Invalid account, try again: {platforms_str}")
+            
     if "codeforces" in handles_data: handles.codeforces = handles_data["codeforces"]
     if "codechef" in handles_data: handles.codechef = handles_data["codechef"]
     if "cses" in handles_data: handles.cses = handles_data["cses"]
