@@ -64,7 +64,7 @@ export function HeroSection({ session }: { session?: any }) {
                 initial={{ opacity: 0, y: 20, filter: "blur(10px)" }}
                 animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
                 transition={{ duration: 0.8, delay: i * 0.1, type: "spring", bounce: 0.4 }}
-                className={i >= 4 ? "bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-teal-400 to-emerald-400" : ""}
+                className={i >= 4 ? "bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-teal-400 to-emerald-400 pb-2" : "pb-2"}
               >
                 {word}
               </motion.span>
