@@ -7,7 +7,12 @@ load_dotenv()
 REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 
 # Create a Redis connection pool
-redis_pool = redis.ConnectionPool.from_url(REDIS_URL, decode_responses=True)
+redis_pool = redis.ConnectionPool.from_url(
+    REDIS_URL, 
+    decode_responses=True,
+    health_check_interval=30,
+    retry_on_timeout=True
+)
 
 def get_redis() -> redis.Redis:
     """Dependency to get Redis client."""
