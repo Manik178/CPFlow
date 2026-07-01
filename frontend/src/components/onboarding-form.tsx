@@ -31,6 +31,9 @@ export function OnboardingForm({ user }: { user: User }) {
     onSuccess: () => {
       window.location.href = "/dashboard"
     },
+    onError: (error) => {
+      alert("Error saving profile: " + error.message + ". Check Vercel logs or network tab.")
+    }
   })
 
   const handleSubmit = (e: React.FormEvent) => {
