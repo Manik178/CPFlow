@@ -24,10 +24,11 @@ export const extensionService = {
 
       window.postMessage({ type: "CPFLOW_EXTENSION_REQUEST", messageId, request }, "*");
 
+      const timeoutDuration = request.action === "SUBMIT" ? 60000 : 15000;
       const timeoutId = setTimeout(() => {
         window.removeEventListener("message", handleResponse);
         reject(new Error("Request timed out. Make sure the browser extension is installed and the problem tab is still open."));
-      }, 15000);
+      }, timeoutDuration);
     });
   },
 

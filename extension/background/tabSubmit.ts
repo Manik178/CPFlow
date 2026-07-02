@@ -72,6 +72,7 @@ export function handleTabAutomationSubmit(
               args: [code, languageId, problemIndex]
             },
             () => {
+              hasSubmitted = true;
               if (chrome.runtime.lastError) {
                 chrome.tabs.remove(tabId);
                 sendResponse({ success: false, error: chrome.runtime.lastError.message });
@@ -83,33 +84,56 @@ export function handleTabAutomationSubmit(
     };
     chrome.tabs.onUpdated.addListener(loadListener);
 
-    // 4. Wait for redirect to /my or /status
+    // 4. Wait for redirect to /my or /status, OR back to /submit on error
     const navListener = (details: chrome.webNavigation.WebNavigationTransitionCallbackDetails) => {
-      if (details.tabId === tabId && (details.url.includes("/my") || details.url.includes("/status"))) {
-        chrome.webNavigation.onCompleted.removeListener(navListener);
-        chrome.tabs.onUpdated.removeListener(loadListener);
-        
-        // 5. Scrape submissionId and close tab
-        setTimeout(() => {
-          chrome.scripting.executeScript(
-            {
-              target: { tabId },
-              func: () => {
-                const row = document.querySelector("tr[data-submission-id]");
-                return row ? row.getAttribute("data-submission-id") : null;
+      if (details.tabId === tabId) {
+        if (details.url.includes("/my") || details.url.includes("/status")) {
+          chrome.webNavigation.onCompleted.removeListener(navListener);
+          chrome.tabs.onUpdated.removeListener(loadListener);
+          
+          // 5. Scrape submissionId and close tab
+          setTimeout(() => {
+            chrome.scripting.executeScript(
+              {
+                target: { tabId },
+                func: () => {
+                  const row = document.querySelector("tr[data-submission-id]");
+                  return row ? row.getAttribute("data-submission-id") : null;
+                }
+              },
+              (results) => {
+                chrome.tabs.remove(tabId);
+                if (results && results[0] && results[0].result) {
+                  sendResponse({ success: true, submissionId: results[0].result });
+                } else {
+                  // If it fails to extract, just close the tab and return success without ID (graceful degradation)
+                  sendResponse({ success: false, error: "Failed to extract submission ID after redirect. Did it compile?" });
+                }
               }
-            },
-            (results) => {
-              chrome.tabs.remove(tabId);
-              if (results && results[0] && results[0].result) {
-                sendResponse({ success: true, submissionId: results[0].result });
-              } else {
-                // If it fails to extract, just close the tab and return success without ID (graceful degradation)
-                sendResponse({ success: false, error: "Failed to extract submission ID after redirect. Did it compile?" });
+            );
+          }, 1500); // 1.5s wait for table to render completely
+        } else if (hasSubmitted && details.url.includes("/submit")) {
+          // Codeforces returned a validation error (e.g. "Same code submitted")
+          chrome.webNavigation.onCompleted.removeListener(navListener);
+          chrome.tabs.onUpdated.removeListener(loadListener);
+          
+          setTimeout(() => {
+            chrome.scripting.executeScript(
+              {
+                target: { tabId },
+                func: () => {
+                  const errorSpan = document.querySelector("span.error");
+                  return errorSpan ? errorSpan.textContent : "Unknown submission error from Codeforces.";
+                }
+              },
+              (results) => {
+                chrome.tabs.remove(tabId);
+                const errorMsg = (results && results[0] && results[0].result) ? results[0].result : "Submission rejected by Codeforces.";
+                sendResponse({ success: false, error: errorMsg });
               }
-            }
-          );
-        }, 1500); // 1.5s wait for table to render completely
+            );
+          }, 500);
+        }
       }
     };
     chrome.webNavigation.onCompleted.addListener(navListener);
