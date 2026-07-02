@@ -28,7 +28,12 @@ _problem_cache: dict[str, dict] = {}
 
 async def get_cache(key: str) -> dict | None:
     try:
-        data = await redis_client.get(key)
+        try:
+            data = await redis_client.get(key)
+        except (ConnectionError, TimeoutError):
+            await redis_client.connection_pool.disconnect()
+            data = await redis_client.get(key)
+            
         if data:
             return json.loads(data)
     except Exception as e:
@@ -37,6 +42,10 @@ async def get_cache(key: str) -> dict | None:
 
 async def set_cache(key: str, data: dict, ex: int = 3600):
     try:
-        await redis_client.set(key, json.dumps(data), ex=ex)
+        try:
+            await redis_client.set(key, json.dumps(data), ex=ex)
+        except (ConnectionError, TimeoutError):
+            await redis_client.connection_pool.disconnect()
+            await redis_client.set(key, json.dumps(data), ex=ex)
     except Exception as e:
         print(f"Redis set_cache error: {e}")

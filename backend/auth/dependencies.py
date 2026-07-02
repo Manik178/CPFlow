@@ -36,9 +36,17 @@ async def _redis_rate_limit(request: Request, key_prefix: str, limit: int, perio
         window = current_time // period
         window_key = f"{key}:{window}"
         
-        count = await redis_client.incr(window_key)
+        try:
+            count = await redis_client.incr(window_key)
+        except Exception:
+            await redis_client.connection_pool.disconnect()
+            count = await redis_client.incr(window_key)
+            
         if count == 1:
-            await redis_client.expire(window_key, period * 2)
+            try:
+                await redis_client.expire(window_key, period * 2)
+            except Exception:
+                pass
             
         if count > limit:
             raise HTTPException(
