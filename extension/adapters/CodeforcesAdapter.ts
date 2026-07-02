@@ -94,6 +94,24 @@ export class CodeforcesAdapter implements JudgeAdapter {
         }
       });
 
+      // Extract ftaa and bfaa from inline scripts if they are missing or empty in the form
+      const ftaaMatch = text.match(/window\._ftaa\s*=\s*['"]([^'"]+)['"]/);
+      const bfaaMatch = text.match(/window\._bfaa\s*=\s*['"]([^'"]+)['"]/);
+      
+      let ftaa = ftaaMatch ? ftaaMatch[1] : "";
+      let bfaa = bfaaMatch ? bfaaMatch[1] : "";
+
+      // Fallback to localStorage (Codeforces stores these here too)
+      if (!ftaa) {
+        try { ftaa = window.localStorage.getItem("ftaa") || window.localStorage.getItem("_ftaa") || ""; } catch (e) {}
+      }
+      if (!bfaa) {
+        try { bfaa = window.localStorage.getItem("bfaa") || window.localStorage.getItem("_bfaa") || ""; } catch (e) {}
+      }
+
+      if (ftaa) formData.set("ftaa", ftaa);
+      if (bfaa) formData.set("bfaa", bfaa);
+
       // Overwrite the code and language
       formData.set("source", code);
       formData.set("programTypeId", mappedLanguageId);
@@ -101,7 +119,7 @@ export class CodeforcesAdapter implements JudgeAdapter {
         formData.set("submittedProblemIndex", problemIndex);
       }
 
-      // 4. Submit the code
+      // 5. Submit the code
       const submitActionUrl = form.getAttribute("action") ? new URL(form.getAttribute("action")!, submitUrl).href : submitUrl;
       const submitRes = await fetch(submitActionUrl, {
         method: "POST",
