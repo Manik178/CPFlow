@@ -68,22 +68,33 @@ export function handleTabAutomationSubmit(
                 if (submitBtn) {
                   submitBtn.disabled = false;
                   submitBtn.click();
-                  return true;
+                  return { success: true };
                 }
-                return false;
+                return { success: false, url: window.location.href, title: document.title };
               },
               args: [code, languageId, problemIndex]
             },
             (results) => {
               if (chrome.runtime.lastError) {
-                // Ignore errors here (e.g. context invalidated on redirect)
                 hasInjected = false;
-              } else if (results && results[0] && results[0].result === true) {
-                hasSubmitted = true;
-                hasInjected = true;
-              } else {
-                // Form not found (e.g. Cloudflare challenge page), reset so we try again
-                hasInjected = false;
+              } else if (results && results[0] && results[0].result) {
+                const res = results[0].result;
+                if (res.success) {
+                  hasSubmitted = true;
+                  hasInjected = true;
+                } else {
+                  if (res.url && res.url.includes("/enter")) {
+                    chrome.tabs.remove(tabId);
+                    sendResponse({ success: false, error: "You are not logged in to Codeforces. Please log in first." });
+                  } else if (res.title && res.title.includes("Just a moment")) {
+                    // Cloudflare challenge. Reset and wait for the real page.
+                    hasInjected = false;
+                  } else {
+                    // Abort so we don't hang until the 60s timeout
+                    chrome.tabs.remove(tabId);
+                    sendResponse({ success: false, error: `Could not find the submit form. Are you sure you have permission to submit here? (Page: ${res.title})` });
+                  }
+                }
               }
             }
           );
