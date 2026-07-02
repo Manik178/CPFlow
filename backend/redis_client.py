@@ -16,9 +16,11 @@ redis_pool = redis.ConnectionPool.from_url(
     REDIS_URL, 
     decode_responses=True,
     health_check_interval=30,
+    socket_keepalive=True,
+    socket_timeout=5,
     retry_on_timeout=True,
     retry=retry_strategy,
-    retry_on_error=[ConnectionError, TimeoutError, ConnectionError]
+    retry_on_error=[ConnectionError, TimeoutError]
 )
 
 def get_redis() -> redis.Redis:

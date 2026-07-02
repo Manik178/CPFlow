@@ -86,7 +86,7 @@ async def health_check():
 
     # Check Redis
     try:
-        from redis_client import redis_client
+        from cache import redis_client
         await redis_client.ping()
         health["services"]["redis"] = "connected"
     except Exception as e:
