@@ -23,10 +23,11 @@ export function handleTabAutomationSubmit(
 
     const tabId = tab.id;
     let hasInjected = false;
+    let hasSubmitted = false;
 
     // 2. Wait for it to load
-    const loadListener = (updatedTabId: number, changeInfo: chrome.tabs.TabChangeInfo) => {
-      if (updatedTabId === tabId && changeInfo.status === "complete" && !hasInjected) {
+    const loadListener = (updatedTabId: number, changeInfo: chrome.tabs.TabChangeInfo, tabNode: chrome.tabs.Tab) => {
+      if (updatedTabId === tabId && changeInfo.status === "complete" && tabNode.url && tabNode.url.includes("codeforces.com") && !hasInjected) {
         hasInjected = true;
         
         // 3. Inject submit script after a brief buffer for Codeforces JS to initialize
@@ -67,15 +68,22 @@ export function handleTabAutomationSubmit(
                 if (submitBtn) {
                   submitBtn.disabled = false;
                   submitBtn.click();
+                  return true;
                 }
+                return false;
               },
               args: [code, languageId, problemIndex]
             },
-            () => {
-              hasSubmitted = true;
+            (results) => {
               if (chrome.runtime.lastError) {
-                chrome.tabs.remove(tabId);
-                sendResponse({ success: false, error: chrome.runtime.lastError.message });
+                // Ignore errors here (e.g. context invalidated on redirect)
+                hasInjected = false;
+              } else if (results && results[0] && results[0].result === true) {
+                hasSubmitted = true;
+                hasInjected = true;
+              } else {
+                // Form not found (e.g. Cloudflare challenge page), reset so we try again
+                hasInjected = false;
               }
             }
           );
