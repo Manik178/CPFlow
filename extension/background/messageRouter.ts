@@ -1,4 +1,5 @@
 import type { ExtensionRequest, ExtensionResponse } from "../shared/types";
+import { handleTabAutomationSubmit } from "./tabSubmit";
 import { NotificationManager } from "./notificationManager";
 
 export function handleRelayToPlatform(
@@ -9,6 +10,12 @@ export function handleRelayToPlatform(
 
   if (!problemUrl) {
     sendResponse({ success: false, error: "problemUrl is missing from request" });
+    return;
+  }
+
+  // Use tab automation for Codeforces SUBMIT to bypass anti-bot
+  if (action === "SUBMIT" && problemUrl.includes("codeforces.com")) {
+    handleTabAutomationSubmit(request, sendResponse);
     return;
   }
 

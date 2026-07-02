@@ -30,7 +30,9 @@
     "permissions": [
       "activeTab",
       "tabs",
-      "notifications"
+      "notifications",
+      "scripting",
+      "webNavigation"
     ]
   }
 }
