@@ -40,8 +40,10 @@ async def get_recommendations(current_user: CurrentUser = Depends(get_current_us
         try:
             cc_data = await get_codechef_analytics(cc_handle, current_user)
             cc_rating = cc_data.get("rating", 0)
-            if cc_rating * 0.9 > max_rating:
-                max_rating = int(cc_rating * 0.9)
+            if cc_rating > 0:
+                normalized_cc = max(1000, cc_rating - 300)
+                if normalized_cc > max_rating:
+                    max_rating = normalized_cc
         except Exception:
             pass
             
@@ -49,8 +51,10 @@ async def get_recommendations(current_user: CurrentUser = Depends(get_current_us
         try:
             lc_data = await get_leetcode_analytics(lc_handle, current_user)
             lc_rating = lc_data.get("rating", 0)
-            if lc_rating * 0.85 > max_rating:
-                max_rating = int(lc_rating * 0.85)
+            if lc_rating > 0:
+                normalized_lc = max(1000, lc_rating - 400)
+                if normalized_lc > max_rating:
+                    max_rating = normalized_lc
         except Exception:
             pass
 
