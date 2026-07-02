@@ -1,8 +1,11 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks
 from auth.dependencies import RateLimiter, get_current_user, CurrentUser
 from pydantic import BaseModel
 import httpx
 import os
+import uuid
+import asyncio
+from cache import get_cache, set_cache
 
 router = APIRouter()
 
@@ -33,12 +36,9 @@ class CodeExecutionRequest(BaseModel):
     expected_output: str | None = None
 
 
-@router.post("/api/run", dependencies=[Depends(RateLimiter(40, 60))])
-async def run_code(request: CodeExecutionRequest, current_user: CurrentUser = Depends(get_current_user)):
-    """
-    Executes code via the Piston execution engine.
-    Piston runs everything inside isolated containers with no network access.
-    """
+execute_semaphore = asyncio.Semaphore(2)
+
+async def _execute_piston(request: CodeExecutionRequest) -> dict:
     lang = request.language.lower()
 
     lang_config = LANGUAGE_MAP.get(lang)
@@ -98,6 +98,7 @@ async def run_code(request: CodeExecutionRequest, current_user: CurrentUser = De
             "time": "0.0",
             "memory": 0,
             "status": STATUS_CE,
+            "passed": False,
         }
 
     # Determine run status
@@ -143,6 +144,63 @@ async def run_code(request: CodeExecutionRequest, current_user: CurrentUser = De
         "status": status,
         "passed": status["id"] == 3,
     }
+
+
+async def process_code_execution(job_id: str, request: CodeExecutionRequest):
+    job_key = f"execute:{job_id}"
+    await set_cache(job_key, {"status": "processing"}, ex=600)
+    
+    try:
+        async with execute_semaphore:
+            result = await _execute_piston(request)
+        await set_cache(job_key, {"status": "completed", "result": result}, ex=600)
+    except HTTPException as e:
+        error_result = {
+            "stdout": None,
+            "stderr": e.detail,
+            "compile_output": None,
+            "time": "0.0",
+            "memory": 0,
+            "status": STATUS_INTERNAL_ERROR,
+            "passed": False,
+        }
+        await set_cache(job_key, {"status": "completed", "result": error_result}, ex=600)
+    except Exception as e:
+        error_result = {
+            "stdout": None,
+            "stderr": f"Internal Server Error: {str(e)}",
+            "compile_output": None,
+            "time": "0.0",
+            "memory": 0,
+            "status": STATUS_INTERNAL_ERROR,
+            "passed": False,
+        }
+        await set_cache(job_key, {"status": "completed", "result": error_result}, ex=600)
+
+
+@router.post("/api/run", dependencies=[Depends(RateLimiter(40, 60))])
+async def run_code(request: CodeExecutionRequest, background_tasks: BackgroundTasks, current_user: CurrentUser = Depends(get_current_user)):
+    """
+    Submits code for execution via the Piston engine using a background queue.
+    """
+    job_id = str(uuid.uuid4())
+    job_key = f"execute:{job_id}"
+    
+    await set_cache(job_key, {"status": "queued"}, ex=600)
+    background_tasks.add_task(process_code_execution, job_id, request)
+    
+    return {"job_id": job_id, "status": "queued"}
+
+@router.get("/api/run/status/{job_id}")
+async def get_run_status(job_id: str, current_user: CurrentUser = Depends(get_current_user)):
+    """
+    Polls the status of an execution job.
+    """
+    job_key = f"execute:{job_id}"
+    data = await get_cache(job_key)
+    if not data:
+        raise HTTPException(status_code=404, detail="Job not found or expired")
+    return data
 
 
 @router.get("/api/runtimes")
