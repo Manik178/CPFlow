@@ -102,11 +102,11 @@ A professional Monaco-based IDE inspired by VSCode, designed specifically for co
 |---|---|
 | Monaco Editor | Syntax highlighting, IntelliSense, and minimap for C++, Python, and Java |
 | Resizable test drawer | Bottom panel with tabbed test cases, drag-to-resize |
-| Run & Submit | Execute code against sample cases or submit directly to Codeforces |
+| Run & Submit | Execute code against sample cases or submit directly to Codeforces via an **asynchronous background queue** |
 | Live verdicts | Real-time submission status with color-coded results |
 | Keyboard shortcuts | Contest-speed keybindings for run, submit, and navigation |
 | Code templates | Per-language starter templates (configurable in settings) |
-| Autosave | Continuous draft saving to IndexedDB — never lose code |
+| Autosave | Continuous draft saving to IndexedDB with debounced syncing |
 | Cross-device sync | Drafts and layouts sync to PostgreSQL for workspace recovery on any device |
 | Stopwatch | Built-in problem timer for practice sessions |
 
@@ -150,11 +150,12 @@ Six specialized agents run in parallel and are validated before delivery:
 | Feature | Description |
 |---|---|
 | Continue Solving | Resume recent workspaces with one click |
+| Zero-Scroll Layout | Handles, cumulative progress, and heatmap all visible in a unified grid |
 | Connected Handles | Link Codeforces, CodeChef, CSES, and LeetCode accounts (with live validation) |
 | Cross-platform Analytics | Rating graphs, problem distribution, difficulty breakdown, and verdict statistics |
 | Contribution Heatmap | GitHub-style submission heatmap aggregated across all platforms |
 | Contest Calendar | Upcoming contests from Codeforces and CodeChef with countdown timers |
-| AI Recommendations | Personalized problem suggestions based on your solving history |
+| AI Recommendations | Personalized problem suggestions based on your solving history (normalized across platforms) |
 | Past Contests | Browse and analyze historical contest performance |
 
 ---
@@ -258,8 +259,9 @@ graph TB
 | Frontend hosting | Vercel | Edge deployment with automatic CI/CD from GitHub |
 | Backend hosting | Render | Managed Python hosting with auto-deploy |
 | Database | Neon | Serverless PostgreSQL |
-| Cache | Redis Cloud | Managed Redis for caching and rate limiting |
-| Code execution | AWS EC2 (`t3.micro`) | Dockerized Piston engine with cgroup isolation |
+| Cache | Render Redis | Persistent cache and job queue status storage |
+| Code Execution | AWS EC2 (`t3.micro`) | Dockerized Piston execution engine protected by an `asyncio.Semaphore` queue |
+| Health Monitoring | `/api/health` | Unified endpoint validating DB, Redis, and Piston connectivity |
 
 ### Browser Extension
 
