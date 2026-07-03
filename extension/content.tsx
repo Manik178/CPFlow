@@ -37,6 +37,9 @@ function isExtensionValid(): boolean {
 }
 
 chrome.runtime.onMessage.addListener((request: ExtensionRequest, sender, sendResponse) => {
+  // Ignore messages that aren't CPFlow extension requests (e.g. from tabSubmit injection)
+  if (!request.action) return false;
+
   if (!isExtensionValid()) {
     return false;
   }
