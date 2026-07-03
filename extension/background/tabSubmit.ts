@@ -20,111 +20,56 @@ export async function handleTabAutomationSubmit(
     if (!tab || !tab.id) throw new Error("Failed to create submission tab");
     const tabId = tab.id;
 
-    // 2. Linear retry loop for injection (handles Cloudflare and slow loads)
-    let injected = false;
-    let attempts = 0;
-    while (!injected && attempts < 10) {
-      attempts++;
-      try {
-        const results = await chrome.scripting.executeScript({
-          target: { tabId },
-          func: async (sourceCode: string, langId: string, probIndex: string) => {
-            return new Promise((resolve) => {
-              let checks = 0;
-              const interval = setInterval(() => {
-                checks++;
-                
-                // Cloudflare check
-                if (document.title.includes("Just a moment")) {
-                  clearInterval(interval);
-                  resolve({ status: "cloudflare" });
-                  return;
-                }
-                
-                // Login check
-                if (window.location.href.includes("/enter")) {
-                  clearInterval(interval);
-                  resolve({ status: "unauthorized" });
-                  return;
-                }
+    // 2. Inject script directly (executeScript waits for document_idle automatically!)
+    await chrome.scripting.executeScript({
+      target: { tabId, allFrames: true },
+      func: (sourceCode: string, langId: string, probIndex: string) => {
+        const languageEl = document.getElementsByName('programTypeId')[0] as HTMLSelectElement;
+        const sourceCodeEl = document.getElementById('sourceCodeTextarea') as HTMLTextAreaElement;
+        
+        if (!languageEl || !sourceCodeEl) return { injected: false };
 
-                const submitBtn = document.querySelector(".submit") as HTMLButtonElement | null;
-                const sourceEl = document.getElementById("sourceCodeTextarea") as HTMLTextAreaElement | null;
-                const langSelect = document.querySelector('select[name="programTypeId"]') as HTMLSelectElement | null;
-
-                if (submitBtn && sourceEl && langSelect) {
-                  clearInterval(interval);
-                  
-                  // Fill Language
-                  const options = Array.from(langSelect.options);
-                  let mappedLang = langId;
-                  if (!options.some(o => o.value === langId)) {
-                    if (langId.toLowerCase().includes("cpp") || langId.toLowerCase().includes("c++")) {
-                      const opt = options.find(o => o.text.includes("C++20")) || options.find(o => o.text.includes("C++17")) || options.find(o => o.text.includes("G++"));
-                      if (opt) mappedLang = opt.value;
-                    } else if (langId.toLowerCase().includes("py")) {
-                      const opt = options.find(o => o.text.includes("PyPy 3")) || options.find(o => o.text.includes("Python 3"));
-                      if (opt) mappedLang = opt.value;
-                    } else if (langId.toLowerCase().includes("java")) {
-                      const opt = options.find(o => o.text.includes("Java 21")) || options.find(o => o.text.includes("Java 17")) || options.find(o => o.text.includes("Java 11"));
-                      if (opt) mappedLang = opt.value;
-                    }
-                  }
-                  langSelect.value = mappedLang;
-                  
-                  // Fill Code
-                  sourceEl.value = sourceCode;
-
-                  // Fill Problem Index if needed
-                  if (probIndex) {
-                    const probEl = document.querySelector('input[name="submittedProblemIndex"]') as HTMLInputElement | null;
-                    if (probEl) probEl.value = probIndex;
-                  }
-
-                  // Click Submit
-                  submitBtn.disabled = false;
-                  submitBtn.click();
-                  resolve({ status: "submitted" });
-                } else if (checks > 10) { // 5 seconds polling per inject
-                  clearInterval(interval);
-                  resolve({ status: "timeout" });
-                }
-              }, 500);
-            });
-          },
-          args: [code, languageId, problemIndex]
-        });
-
-        const res = results[0].result as { status: string };
-        if (res.status === "submitted") {
-          injected = true;
-          break;
-        } else if (res.status === "unauthorized") {
-          chrome.tabs.remove(tabId);
-          return sendResponse({ success: false, error: "You are not logged in to Codeforces. Please log in first." });
-        } else if (res.status === "cloudflare") {
-          // Wait 3 seconds and retry injection (let Cloudflare redirect)
-          await new Promise(r => setTimeout(r, 3000));
-        } else {
-          // Timeout, try injecting again just in case DOM completely rebuilt
-          await new Promise(r => setTimeout(r, 1000));
+        sourceCodeEl.value = sourceCode;
+        
+        const options = Array.from(languageEl.options);
+        let mappedLang = langId;
+        if (!options.some(o => o.value === langId)) {
+          if (langId.toLowerCase().includes("cpp") || langId.toLowerCase().includes("c++")) {
+            const opt = options.find(o => o.text.includes("C++20")) || options.find(o => o.text.includes("C++17")) || options.find(o => o.text.includes("G++"));
+            if (opt) mappedLang = opt.value;
+          } else if (langId.toLowerCase().includes("py")) {
+            const opt = options.find(o => o.text.includes("PyPy 3")) || options.find(o => o.text.includes("Python 3"));
+            if (opt) mappedLang = opt.value;
+          } else if (langId.toLowerCase().includes("java")) {
+            const opt = options.find(o => o.text.includes("Java 21")) || options.find(o => o.text.includes("Java 17")) || options.find(o => o.text.includes("Java 11"));
+            if (opt) mappedLang = opt.value;
+          }
         }
-      } catch (err) {
-        // "Context invalidated" happens when page navigates (e.g. Cloudflare -> Real page)
-        await new Promise(r => setTimeout(r, 2000));
-      }
-    }
+        languageEl.value = mappedLang;
 
-    if (!injected) {
-      chrome.tabs.remove(tabId);
-      return sendResponse({ success: false, error: "Failed to find submit form after multiple attempts. Is Codeforces down?" });
-    }
+        if (probIndex) {
+          const problemIndexEl = document.getElementsByName('submittedProblemIndex')[0] as HTMLInputElement;
+          if (problemIndexEl) {
+            problemIndexEl.value = probIndex;
+          }
+        }
+
+        const submitBtn = document.querySelector('.submit') as HTMLButtonElement;
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.click();
+          return { injected: true };
+        }
+        return { injected: false };
+      },
+      args: [code, languageId, problemIndex]
+    });
 
     // 3. Wait for Navigation (Success or Validation Error)
     let navResolved = false;
     const checkNav = async () => {
       let checks = 0;
-      while (!navResolved && checks < 20) { // Check for up to 20 seconds
+      while (!navResolved && checks < 40) { // Check for up to 40 seconds (Codeforces queue can be slow)
         await new Promise(r => setTimeout(r, 1000));
         checks++;
         
@@ -144,8 +89,8 @@ export async function handleTabAutomationSubmit(
             }
           });
           
-          const navRes = navResults[0].result as { done: boolean, type?: string, id?: string, msg?: string };
-          if (navRes.done) {
+          const navRes = navResults[0]?.result as { done: boolean, type?: string, id?: string, msg?: string } | undefined;
+          if (navRes && navRes.done) {
             navResolved = true;
             chrome.tabs.remove(tabId);
             if (navRes.type === "success") {
