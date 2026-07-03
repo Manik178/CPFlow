@@ -1,7 +1,7 @@
 import { resolveCodeforcesSubmitTarget } from "../utils/urlParser";
 import type { ExtensionRequest, ExtensionResponse } from "../shared/types";
 
-export function handleTabAutomationSubmit(
+export async function handleTabAutomationSubmit(
   request: ExtensionRequest,
   sendResponse: (res: ExtensionResponse) => void
 ) {
@@ -14,31 +14,48 @@ export function handleTabAutomationSubmit(
   const { code, languageId } = data;
   const { submitUrl, problemIndex } = resolveCodeforcesSubmitTarget(problemUrl);
 
-  // 1. Create tab to submit code
-  chrome.tabs.create({ url: submitUrl, active: false }, (tab) => {
-    if (!tab || !tab.id) {
-      sendResponse({ success: false, error: "Failed to create submission tab" });
-      return;
-    }
-
+  try {
+    // 1. Create tab
+    const tab = await chrome.tabs.create({ url: submitUrl, active: true });
+    if (!tab || !tab.id) throw new Error("Failed to create submission tab");
     const tabId = tab.id;
-    let hasInjected = false;
-    let hasSubmitted = false;
 
-    // 2. Wait for it to load
-    const loadListener = (updatedTabId: number, changeInfo: chrome.tabs.TabChangeInfo, tabNode: chrome.tabs.Tab) => {
-      if (updatedTabId === tabId && changeInfo.status === "complete" && tabNode.url && tabNode.url.includes("codeforces.com") && !hasInjected) {
-        hasInjected = true;
-        
-        // 3. Inject submit script after a brief buffer for Codeforces JS to initialize
-        setTimeout(() => {
-          chrome.scripting.executeScript(
-            {
-              target: { tabId },
-              func: (sourceCode: string, langId: string, probIndex: string) => {
-                // Map the language ID similar to our headless logic
+    // 2. Linear retry loop for injection (handles Cloudflare and slow loads)
+    let injected = false;
+    let attempts = 0;
+    while (!injected && attempts < 10) {
+      attempts++;
+      try {
+        const results = await chrome.scripting.executeScript({
+          target: { tabId },
+          func: async (sourceCode: string, langId: string, probIndex: string) => {
+            return new Promise((resolve) => {
+              let checks = 0;
+              const interval = setInterval(() => {
+                checks++;
+                
+                // Cloudflare check
+                if (document.title.includes("Just a moment")) {
+                  clearInterval(interval);
+                  resolve({ status: "cloudflare" });
+                  return;
+                }
+                
+                // Login check
+                if (window.location.href.includes("/enter")) {
+                  clearInterval(interval);
+                  resolve({ status: "unauthorized" });
+                  return;
+                }
+
+                const submitBtn = document.querySelector(".submit") as HTMLButtonElement | null;
+                const sourceEl = document.getElementById("sourceCodeTextarea") as HTMLTextAreaElement | null;
                 const langSelect = document.querySelector('select[name="programTypeId"]') as HTMLSelectElement | null;
-                if (langSelect) {
+
+                if (submitBtn && sourceEl && langSelect) {
+                  clearInterval(interval);
+                  
+                  // Fill Language
                   const options = Array.from(langSelect.options);
                   let mappedLang = langId;
                   if (!options.some(o => o.value === langId)) {
@@ -54,107 +71,103 @@ export function handleTabAutomationSubmit(
                     }
                   }
                   langSelect.value = mappedLang;
-                }
-                
-                const sourceEl = document.getElementById("sourceCodeTextarea") as HTMLTextAreaElement | null;
-                if (sourceEl) sourceEl.value = sourceCode;
+                  
+                  // Fill Code
+                  sourceEl.value = sourceCode;
 
-                if (probIndex) {
-                  const probEl = document.querySelector('input[name="submittedProblemIndex"]') as HTMLInputElement | null;
-                  if (probEl) probEl.value = probIndex;
-                }
+                  // Fill Problem Index if needed
+                  if (probIndex) {
+                    const probEl = document.querySelector('input[name="submittedProblemIndex"]') as HTMLInputElement | null;
+                    if (probEl) probEl.value = probIndex;
+                  }
 
-                const submitBtn = document.querySelector(".submit") as HTMLButtonElement | null;
-                if (submitBtn) {
+                  // Click Submit
                   submitBtn.disabled = false;
                   submitBtn.click();
-                  return { success: true };
+                  resolve({ status: "submitted" });
+                } else if (checks > 10) { // 5 seconds polling per inject
+                  clearInterval(interval);
+                  resolve({ status: "timeout" });
                 }
-                return { success: false, url: window.location.href, title: document.title };
-              },
-              args: [code, languageId, problemIndex]
-            },
-            (results) => {
-              if (chrome.runtime.lastError) {
-                hasInjected = false;
-              } else if (results && results[0] && results[0].result) {
-                const res = results[0].result;
-                if (res.success) {
-                  hasSubmitted = true;
-                  hasInjected = true;
-                } else {
-                  if (res.url && res.url.includes("/enter")) {
-                    chrome.tabs.remove(tabId);
-                    sendResponse({ success: false, error: "You are not logged in to Codeforces. Please log in first." });
-                  } else if (res.title && res.title.includes("Just a moment")) {
-                    // Cloudflare challenge. Reset and wait for the real page.
-                    hasInjected = false;
-                  } else {
-                    // Abort so we don't hang until the 60s timeout
-                    chrome.tabs.remove(tabId);
-                    sendResponse({ success: false, error: `Could not find the submit form. Are you sure you have permission to submit here? (Page: ${res.title})` });
-                  }
-                }
-              }
-            }
-          );
-        }, 1000);
-      }
-    };
-    chrome.tabs.onUpdated.addListener(loadListener);
+              }, 500);
+            });
+          },
+          args: [code, languageId, problemIndex]
+        });
 
-    // 4. Wait for redirect to /my or /status, OR back to /submit on error
-    const navListener = (details: chrome.webNavigation.WebNavigationTransitionCallbackDetails) => {
-      if (details.tabId === tabId && details.frameId === 0) {
-        if (details.url.includes("/my") || details.url.includes("/status")) {
-          chrome.webNavigation.onCompleted.removeListener(navListener);
-          chrome.tabs.onUpdated.removeListener(loadListener);
-          
-          // 5. Scrape submissionId and close tab
-          setTimeout(() => {
-            chrome.scripting.executeScript(
-              {
-                target: { tabId },
-                func: () => {
-                  const row = document.querySelector("tr[data-submission-id]");
-                  return row ? row.getAttribute("data-submission-id") : null;
-                }
-              },
-              (results) => {
-                chrome.tabs.remove(tabId);
-                if (results && results[0] && results[0].result) {
-                  sendResponse({ success: true, submissionId: results[0].result });
-                } else {
-                  // If it fails to extract, just close the tab and return success without ID (graceful degradation)
-                  sendResponse({ success: false, error: "Failed to extract submission ID after redirect. Did it compile?" });
-                }
+        const res = results[0].result as { status: string };
+        if (res.status === "submitted") {
+          injected = true;
+          break;
+        } else if (res.status === "unauthorized") {
+          chrome.tabs.remove(tabId);
+          return sendResponse({ success: false, error: "You are not logged in to Codeforces. Please log in first." });
+        } else if (res.status === "cloudflare") {
+          // Wait 3 seconds and retry injection (let Cloudflare redirect)
+          await new Promise(r => setTimeout(r, 3000));
+        } else {
+          // Timeout, try injecting again just in case DOM completely rebuilt
+          await new Promise(r => setTimeout(r, 1000));
+        }
+      } catch (err) {
+        // "Context invalidated" happens when page navigates (e.g. Cloudflare -> Real page)
+        await new Promise(r => setTimeout(r, 2000));
+      }
+    }
+
+    if (!injected) {
+      chrome.tabs.remove(tabId);
+      return sendResponse({ success: false, error: "Failed to find submit form after multiple attempts. Is Codeforces down?" });
+    }
+
+    // 3. Wait for Navigation (Success or Validation Error)
+    let navResolved = false;
+    const checkNav = async () => {
+      let checks = 0;
+      while (!navResolved && checks < 20) { // Check for up to 20 seconds
+        await new Promise(r => setTimeout(r, 1000));
+        checks++;
+        
+        try {
+          const navResults = await chrome.scripting.executeScript({
+            target: { tabId },
+            func: () => {
+              const url = window.location.href;
+              if (url.includes("/my") || url.includes("/status")) {
+                const row = document.querySelector("tr[data-submission-id]");
+                return { done: true, type: "success", id: row ? row.getAttribute("data-submission-id") : null };
+              } else if (url.includes("/submit")) {
+                const err = document.querySelector("span.error");
+                if (err) return { done: true, type: "error", msg: err.textContent };
               }
-            );
-          }, 1500); // 1.5s wait for table to render completely
-        } else if (hasSubmitted && details.url.includes("/submit")) {
-          // Codeforces returned a validation error (e.g. "Same code submitted")
-          chrome.webNavigation.onCompleted.removeListener(navListener);
-          chrome.tabs.onUpdated.removeListener(loadListener);
+              return { done: false };
+            }
+          });
           
-          setTimeout(() => {
-            chrome.scripting.executeScript(
-              {
-                target: { tabId },
-                func: () => {
-                  const errorSpan = document.querySelector("span.error");
-                  return errorSpan ? errorSpan.textContent : "Unknown submission error from Codeforces.";
-                }
-              },
-              (results) => {
-                chrome.tabs.remove(tabId);
-                const errorMsg = (results && results[0] && results[0].result) ? results[0].result : "Submission rejected by Codeforces.";
-                sendResponse({ success: false, error: errorMsg });
-              }
-            );
-          }, 500);
+          const navRes = navResults[0].result as { done: boolean, type?: string, id?: string, msg?: string };
+          if (navRes.done) {
+            navResolved = true;
+            chrome.tabs.remove(tabId);
+            if (navRes.type === "success") {
+              return sendResponse({ success: true, submissionId: navRes.id || undefined });
+            } else {
+              return sendResponse({ success: false, error: navRes.msg || "Submission rejected." });
+            }
+          }
+        } catch (e) {
+          // Ignore context invalidated during navigation
         }
       }
+      
+      if (!navResolved) {
+        chrome.tabs.remove(tabId);
+        return sendResponse({ success: false, error: "Timed out waiting for submission result from Codeforces." });
+      }
     };
-    chrome.webNavigation.onCompleted.addListener(navListener);
-  });
+    
+    checkNav();
+
+  } catch (err: any) {
+    sendResponse({ success: false, error: err.message });
+  }
 }
