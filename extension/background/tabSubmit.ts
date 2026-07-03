@@ -162,16 +162,18 @@ export function handleTabAutomationSubmit(
                     func: () => {
                       const url = window.location.href;
                       // Check if we navigated to status/my page
-                      if (url.includes("/my") || url.includes("/status")) {
+                      if (url.includes("/my") || url.includes("/status") || url.includes("/submissions")) {
                         const row = document.querySelector(
                           "tr[data-submission-id]"
                         );
-                        return {
-                          navigated: true,
-                          submissionId: row
-                            ? row.getAttribute("data-submission-id")
-                            : null,
-                        };
+                        if (row) {
+                          return {
+                            navigated: true,
+                            submissionId: row.getAttribute("data-submission-id"),
+                          };
+                        }
+                        // Page navigated but table hasn't rendered yet — keep polling
+                        return { navigated: false };
                       }
                       // Check for error on submit page
                       if (url.includes("/submit")) {
@@ -188,7 +190,7 @@ export function handleTabAutomationSubmit(
                   });
 
                   const res = results?.[0]?.result as any;
-                  if (res?.navigated) {
+                  if (res?.navigated && res?.submissionId) {
                     scraped = true;
                     clearInterval(scrapeInterval);
                     chrome.tabs.remove(tabId);
