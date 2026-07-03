@@ -34,8 +34,8 @@ export function handleTabAutomationSubmit(
   console.log("[CPFlow tabSubmit] problemIndex:", problemIndex);
   console.log("[CPFlow tabSubmit] sourceCode length:", sourceCode?.length);
 
-  // 1. Create tab (active: true, exactly like cph-submit)
-  chrome.tabs.create({ url: submitUrl, active: true }, (tab) => {
+  // 1. Create tab (active: false, exactly like cph-submit)
+  chrome.tabs.create({ url: submitUrl, active: false }, (tab) => {
     if (!tab || !tab.id) {
       sendResponse({ success: false, error: "Failed to create submission tab" });
       return;
@@ -194,7 +194,7 @@ export function handleTabAutomationSubmit(
                     chrome.tabs.remove(tabId);
                     sendResponse({
                       success: true,
-                      data: { submissionId: res.submissionId },
+                      data: { success: true, submissionId: res.submissionId },
                     });
                   } else if (res?.error) {
                     scraped = true;
