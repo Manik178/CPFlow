@@ -59,11 +59,12 @@ export function useJudge() {
       setSubmissionVerdict({ status: "Submitting..." });
       
       try {
-        const res = await extensionService.submitCode(code, language, problem.url);
-        if (!res.success || !res.submissionId) {
-          throw new Error(res.error || "Submission failed");
-        }
+        // We don't await because tabSubmit might timeout or throw even though the submission succeeded on Codeforces
+        extensionService.submitCode(code, language, problem.url).catch((err) => {
+          console.warn("CPFlow: Submit command returned an error, but we will check for a submission anyway", err);
+        });
         
+        // Assume submission started, begin polling the LATEST submission
         setSubmissionVerdict({ status: "Submitted. Polling verdict..." });
 
         // Poll for verdict
@@ -71,7 +72,7 @@ export function useJudge() {
         
         pollIntervalRef.current = setInterval(async () => {
           try {
-            const verdict = await extensionService.getVerdict(res.submissionId!, problem.url);
+            const verdict = await extensionService.getVerdict("LATEST", problem.url);
             setSubmissionVerdict(verdict);
             
             if (verdict.status !== "Queued" && verdict.status !== "Running" && verdict.status !== "Unknown" && verdict.status !== "Submitted. Polling verdict...") {
@@ -84,9 +85,10 @@ export function useJudge() {
 
       } catch (error: any) {
         setSubmissionVerdict({ status: "Error", compilerOutput: error.message });
-        alert("Failed to submit: " + error.message);
+        console.error("Submit error", error);
       } finally {
-        setIsSubmitting(false);
+        // Wait a bit before enabling the submit button again to prevent spam
+        setTimeout(() => setIsSubmitting(false), 3000);
       }
     },
     []

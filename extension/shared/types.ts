@@ -33,6 +33,8 @@ export interface VerdictDetails {
   time?: string;
   memory?: string;
   compilerOutput?: string;
+  submissionId?: string;
+  problemName?: string;
 }
 
 export interface JudgeAdapter {

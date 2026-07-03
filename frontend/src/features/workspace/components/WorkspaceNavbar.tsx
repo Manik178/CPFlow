@@ -68,9 +68,16 @@ export function WorkspaceNavbar() {
           Run
         </Button>
         {submissionVerdict && (
-          <span className={`text-xs font-medium px-2 ${submissionVerdict.status === 'Accepted' ? 'text-emerald-400' : submissionVerdict.status.includes('Error') || submissionVerdict.status === 'Wrong Answer' || submissionVerdict.status === 'Time Limit' || submissionVerdict.status === 'Memory Limit' ? 'text-red-400' : 'text-zinc-400'}`}>
-            {submissionVerdict.status} {submissionVerdict.testcase ? `(Test ${submissionVerdict.testcase})` : ''}
-          </span>
+          <div className="flex flex-col items-end mr-2 leading-tight justify-center">
+            <span className={`text-xs font-medium px-2 ${submissionVerdict.status === 'Accepted' ? 'text-emerald-400' : submissionVerdict.status.includes('Error') || submissionVerdict.status === 'Wrong Answer' || submissionVerdict.status === 'Time Limit' || submissionVerdict.status === 'Memory Limit' ? 'text-red-400' : 'text-zinc-400'}`}>
+              {submissionVerdict.status} {submissionVerdict.testcase ? `(Test ${submissionVerdict.testcase})` : ''}
+            </span>
+            {submissionVerdict.submissionId && (
+              <span className="text-[10px] text-zinc-500 px-2 mt-0.5 max-w-[150px] truncate">
+                #{submissionVerdict.submissionId} {submissionVerdict.problemName ? `- ${submissionVerdict.problemName}` : ''}
+              </span>
+            )}
+          </div>
         )}
         <Button
           size="sm"

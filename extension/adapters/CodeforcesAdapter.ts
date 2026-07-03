@@ -166,12 +166,17 @@ export class CodeforcesAdapter implements JudgeAdapter {
              compilerOutput = data.checkerStdoutAndStderr || "Compiler output unavailable.";
           }
 
+          const actualSubmissionId = row.getAttribute("data-submission-id") || undefined;
+          const problemName = row.querySelector("td:nth-child(3)")?.textContent?.trim() || undefined;
+
           return {
             status: parsedStatus,
             testcase,
             time: row.querySelector('td.time-consumed-cell')?.textContent?.trim(),
             memory: row.querySelector('td.memory-consumed-cell')?.textContent?.trim(),
-            compilerOutput
+            compilerOutput,
+            submissionId: actualSubmissionId,
+            problemName
           };
         }
       }
