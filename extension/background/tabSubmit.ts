@@ -105,7 +105,7 @@ export function handleTabAutomationSubmit(
 
     // 4. Wait for redirect to /my or /status, OR back to /submit on error
     const navListener = (details: chrome.webNavigation.WebNavigationTransitionCallbackDetails) => {
-      if (details.tabId === tabId) {
+      if (details.tabId === tabId && details.frameId === 0) {
         if (details.url.includes("/my") || details.url.includes("/status")) {
           chrome.webNavigation.onCompleted.removeListener(navListener);
           chrome.tabs.onUpdated.removeListener(loadListener);
