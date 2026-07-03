@@ -34,8 +34,8 @@ export function handleTabAutomationSubmit(
   console.log("[CPFlow tabSubmit] problemIndex:", problemIndex);
   console.log("[CPFlow tabSubmit] sourceCode length:", sourceCode?.length);
 
-  // 1. Create tab (active: false, exactly like cph-submit)
-  chrome.tabs.create({ url: submitUrl, active: false }, (tab) => {
+  // 1. Create tab (active: true, exactly like cph-submit)
+  chrome.tabs.create({ url: submitUrl, active: true }, (tab) => {
     if (!tab || !tab.id) {
       sendResponse({ success: false, error: "Failed to create submission tab" });
       return;
@@ -163,17 +163,7 @@ export function handleTabAutomationSubmit(
                       const url = window.location.href;
                       // Check if we navigated to status/my page
                       if (url.includes("/my") || url.includes("/status") || url.includes("/submissions")) {
-                        const row = document.querySelector(
-                          "tr[data-submission-id]"
-                        );
-                        if (row) {
-                          return {
-                            navigated: true,
-                            submissionId: row.getAttribute("data-submission-id"),
-                          };
-                        }
-                        // Page navigated but table hasn't rendered yet — keep polling
-                        return { navigated: false };
+                        return { navigated: true, submissionId: "LATEST" };
                       }
                       // Check for error on submit page
                       if (url.includes("/submit")) {
@@ -190,7 +180,7 @@ export function handleTabAutomationSubmit(
                   });
 
                   const res = results?.[0]?.result as any;
-                  if (res?.navigated && res?.submissionId) {
+                  if (res?.navigated) {
                     scraped = true;
                     clearInterval(scrapeInterval);
                     chrome.tabs.remove(tabId);
@@ -210,7 +200,7 @@ export function handleTabAutomationSubmit(
                 } catch (e) {
                   // Tab might have navigated, context invalidated — that's OK
                 }
-              }, 2000);
+              }, 1000);
 
               // Timeout after 45 seconds
               setTimeout(() => {

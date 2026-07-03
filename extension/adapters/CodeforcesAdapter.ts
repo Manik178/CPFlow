@@ -114,7 +114,13 @@ export class CodeforcesAdapter implements JudgeAdapter {
         const statusRes = await fetch(cacheBusterUrl, { cache: 'no-store' });
         const statusText = await statusRes.text();
         const doc = new DOMParser().parseFromString(statusText, "text/html");
-        const row = doc.querySelector(`tr[data-submission-id="${submissionId}"]`);
+        
+        let row: Element | null = null;
+        if (submissionId === "LATEST") {
+          row = doc.querySelector(`tr[data-submission-id]`);
+        } else {
+          row = doc.querySelector(`tr[data-submission-id="${submissionId}"]`);
+        }
         
         if (row) {
           const verdictCell = row.querySelector('td.status-verdict-cell');
