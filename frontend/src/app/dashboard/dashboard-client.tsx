@@ -81,7 +81,7 @@ export function DashboardClient({ user }: { user: User }) {
                 <DialogTitle>Recent Workspaces</DialogTitle>
                 <DialogDescription>Pick up right where you left off.</DialogDescription>
               </DialogHeader>
-              <ScrollArea className="flex-1 -mx-6 px-6">
+              <ScrollArea className="h-[60vh] -mx-6 px-6">
                 {!loadingRecent && recentWorkspacesData?.workspaces?.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pb-6">
                     {recentWorkspacesData.workspaces.map((ws: any) => (
