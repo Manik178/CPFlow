@@ -59,10 +59,16 @@ export function useJudge() {
       setSubmissionVerdict({ status: "Submitting..." });
       
       try {
-        // We don't await because tabSubmit might timeout or throw even though the submission succeeded on Codeforces
-        extensionService.submitCode(code, language, problem.url).catch((err) => {
+        // We await the submission. The extension will resolve when Codeforces redirects to the status page, 
+        // meaning the submission is successfully in the table.
+        try {
+          await extensionService.submitCode(code, language, problem.url);
+        } catch (err) {
           console.warn("CPFlow: Submit command returned an error, but we will check for a submission anyway", err);
-        });
+          // If it errored (e.g., timeout or disconnect), wait 5 seconds to give Codeforces time to process the submission
+          // before we start polling for the LATEST submission.
+          await new Promise(resolve => setTimeout(resolve, 5000));
+        }
         
         // Assume submission started, begin polling the LATEST submission
         setSubmissionVerdict({ status: "Submitted. Polling verdict..." });
