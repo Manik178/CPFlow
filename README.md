@@ -584,6 +584,7 @@ Or deploy to an EC2 instance for production. See the [Piston documentation](http
 | Skeleton loading states | Instant perceived performance with animated loading placeholders |
 | Incremental sync | Only syncs workspace changes newer than the server's last-known timestamp |
 | LangGraph parallel fan-out | All 5 content agents execute simultaneously, reducing total latency to a single LLM call |
+| Background Execution Queue | Prevents execution server overload by processing code run requests via FastAPI BackgroundTasks and limiting concurrency to 2 parallel tasks |
 
 ---
 
