@@ -4,7 +4,7 @@ from langchain_core.output_parsers import JsonOutputParser
 from prompts import OverviewOutput, OVERVIEW_SYSTEM_PROMPT
 
 async def main():
-    model = ChatGroq(model_name="llama3-70b-8192", temperature=0.2).bind(response_format={"type": "json_object"})
+    model = ChatGroq(model_name="gpt-oss-120b", temperature=0.2).bind(response_format={"type": "json_object"})
     parser = JsonOutputParser(pydantic_object=OverviewOutput)
     
     sys_prompt = OVERVIEW_SYSTEM_PROMPT + "\n\n" + parser.get_format_instructions()
